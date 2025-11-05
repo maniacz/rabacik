@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:rabacik/screens/add_coupon_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -19,7 +20,15 @@ class HomeScreen extends StatelessWidget {
           ),
           Align(
             alignment: Alignment(0, 0.8),
-            child: ElevatedButton(onPressed: () {}, child: Text('Dodaj kod rabatowy'))
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const AddCouponScreen(),
+                  ),
+                );
+              },
+              child: Text('Dodaj kod rabatowy'))
           ),
         ],
       ),
