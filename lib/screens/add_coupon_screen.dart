@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:rabacik/data/db_helper.dart';
+import 'package:rabacik/data/models/coupon.dart';
 
 class AddCouponScreen extends StatefulWidget {
   const AddCouponScreen({super.key});
@@ -10,6 +12,8 @@ class AddCouponScreen extends StatefulWidget {
 
 class _AddCouponScreenState extends State<AddCouponScreen> {
   DateTime? _selectedDate;
+  String? _couponCode;
+  String? _couponIssuer;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -27,12 +31,18 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                 border: OutlineInputBorder(),
                 labelText: 'Wpisz kod rabatowy',
               ),
+              onSubmitted: (String value) => {
+                _couponCode = value
+              },
             ),
             TextField(
               decoration: InputDecoration(
                 border: OutlineInputBorder(),
                 labelText: 'Gdzie działa kod rabatowy',
               ),
+              onSubmitted: (String value) => {
+                _couponIssuer = value
+              },
             ),
             Row(
               children: [
@@ -70,7 +80,23 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    // Save coupon logic here
+                    DbHelper helper = DbHelper();
+                    Coupon coupon = Coupon(
+                      code: _couponCode ?? '',
+                      issuer: _couponIssuer ?? '',
+                      discount: 15.0, 
+                      expiryDate: _selectedDate ?? DateTime.now()
+                    );
+                    print('Dodano kupon: ${coupon.code}');
+                    helper.insertCoupon(coupon)
+                      .then((id) {
+                        final message = (id > 0) 
+                          ? 'Dodano kupon o id: $id' 
+                          : 'Wystąpił błąd podczas dodawania kuponu';
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(message), duration: Duration(seconds: 2),)
+                        );
+                      });
                     Navigator.of(context).pop();
                   },
                   child: const Text('Zapisz'),

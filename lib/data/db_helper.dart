@@ -26,4 +26,15 @@ class DbHelper {
       return 0;
     }
   }
+
+  Future<List<Coupon>> getCoupons() async {
+    Database db = await _openDb();
+    final finder = Finder();
+    final couponsSnapshot = await store.find(db, finder: finder);
+    return couponsSnapshot.map((item) {
+      final coupon = Coupon.fromJSON(item.value);
+      coupon.id = item.key;
+      return coupon;
+    }).toList();
+  }
 }
