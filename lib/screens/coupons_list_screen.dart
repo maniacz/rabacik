@@ -12,16 +12,30 @@ class CouponsListScreen extends StatelessWidget {
       body: FutureBuilder(
         future: getCoupons(),
         builder: (context, snapshot) {
-          final List<ListTile> listTiles = [];
+          final List<Dismissible> listTiles = [];
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const CircularProgressIndicator();
           } else if (snapshot.hasError) {
             return Center(child: Text('Error ${snapshot.error}'),);
           } else {
             for (Coupon coupon in snapshot.data!) {
-              listTiles.add(ListTile(
-                title: Text(coupon.code),
-                subtitle: Text(coupon.discount.toString()),
+              listTiles.add(Dismissible(
+                key: Key(coupon.id.toString()),
+                direction: DismissDirection.endToStart,
+                onDismissed: (direction) async {
+                  DbHelper helper = DbHelper();
+                  await helper.deleteCoupon(coupon.id!);
+                },
+                background: Container(
+                  color: Colors.red,
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: const Icon(Icons.delete, color: Colors.white),
+                ),
+                child: ListTile(
+                  title: Text(coupon.code),
+                  subtitle: Text(coupon.discount.toString()),
+                ),
               ));
             }
           }

@@ -37,4 +37,14 @@ class DbHelper {
       return coupon;
     }).toList();
   }
+
+  Future<bool> deleteCoupon(int id) async {
+    try {
+      Database db = await _openDb();
+      await store.record(id).delete(db);
+      return true;
+    } on Exception catch (_) {
+      return false;
+    }
+  }
 }
