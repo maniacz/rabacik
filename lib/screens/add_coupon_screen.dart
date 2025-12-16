@@ -31,8 +31,8 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                 border: OutlineInputBorder(),
                 labelText: 'Wpisz kod rabatowy',
               ),
-              onSubmitted: (String value) => {
-                _couponCode = value
+              onChanged: (value) {
+                _couponCode = value;
               },
             ),
             TextField(
@@ -40,8 +40,8 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                 border: OutlineInputBorder(),
                 labelText: 'Gdzie działa kod rabatowy',
               ),
-              onSubmitted: (String value) => {
-                _couponIssuer = value
+              onChanged: (value) {
+                _couponIssuer = value;
               },
             ),
             Row(
@@ -80,6 +80,7 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                 ),
                 ElevatedButton(
                   onPressed: () {
+                    // Ensure latest values are captured
                     DbHelper helper = DbHelper();
                     Coupon coupon = Coupon(
                       code: _couponCode ?? '',
@@ -101,6 +102,7 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                   },
                   child: const Text('Zapisz'),
                 ),
+
               ],
             ),
           ],
