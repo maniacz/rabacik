@@ -47,4 +47,15 @@ class DbHelper {
       return false;
     }
   }
+
+  Future<bool> updateCoupon(Coupon coupon) async {
+    try {
+      Database db = await _openDb();
+      final finder = Finder(filter: Filter.byKey(coupon.id));
+      await store.update(db, coupon.toMap(), finder: finder);
+      return true;
+    } on Exception catch (_) {
+      return false;
+    }
+  }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rabacik/data/db_helper.dart';
 import 'package:rabacik/data/models/coupon.dart';
+import 'package:rabacik/screens/add_coupon_screen.dart';
 
 class CouponsListScreen extends StatelessWidget {
   const CouponsListScreen({super.key});
@@ -35,6 +36,16 @@ class CouponsListScreen extends StatelessWidget {
                 child: ListTile(
                   title: Text(coupon.code),
                   subtitle: Text(coupon.discount.toString()),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => AddCouponScreen(coupon: coupon),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ));
             }
