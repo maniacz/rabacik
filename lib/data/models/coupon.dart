@@ -6,6 +6,7 @@ class Coupon {
   int? id;
 
   Coupon({
+    this.id,
     required this.code,
     required this.issuer,
     required this.discount,
@@ -26,7 +27,8 @@ class Coupon {
     return {
       'code': code,
       'discount': discount,
-      'expiryDate': expiryDate.toIso8601String()
+      'expiryDate': expiryDate.toIso8601String(),
+      'issuer': issuer,
     };
   }
 }
