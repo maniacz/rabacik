@@ -63,6 +63,18 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
               },
             ),
             const SizedBox(height: 20),
+            TextField(
+              controller: TextEditingController(text: _discount?.toString()),
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'Wpisz wartość rabatu (%)',
+              ),
+              keyboardType: TextInputType.number,
+              onChanged: (value) {
+                _discount = double.tryParse(value);
+              },
+            ),
+            const SizedBox(height: 20),
             Row(
               children: [
                 const Text('Ważny do: '),
@@ -101,7 +113,7 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                   onPressed: () {
                     DbHelper helper = DbHelper();
                     Coupon coupon = Coupon(
-                      // id: widget.coupon?.id,
+                      id: widget.coupon?.id,
                       code: _couponCode ?? '',
                       issuer: _couponIssuer ?? '',
                       discount: widget.coupon?.discount ?? 15.0,
