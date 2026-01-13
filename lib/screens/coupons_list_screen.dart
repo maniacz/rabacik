@@ -35,7 +35,8 @@ class CouponsListScreen extends StatelessWidget {
                 ),
                 child: ListTile(
                   title: Text(coupon.code),
-                  subtitle: Text(coupon.discount.toString()),
+                  subtitle: Text('${coupon.discount}% - ważny do ${coupon.expiryDate.toString().split(' ')[0]} - ${coupon.issuer}'),
+                  isThreeLine: true,
                   trailing: IconButton(
                     icon: const Icon(Icons.edit),
                     onPressed: () {
