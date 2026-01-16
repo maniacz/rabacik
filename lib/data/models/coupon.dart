@@ -23,6 +23,13 @@ class Coupon {
     return DateTime.now().isBefore(expiryDate);
   }
 
+  /// Returns true if the coupon will expire within the next 7 days.
+  bool isExpiringSoon() {
+    final now = DateTime.now();
+    final inAWeek = now.add(Duration(days: 7));
+    return now.isBefore(expiryDate) && expiryDate.isBefore(inAWeek);
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'code': code,

@@ -63,8 +63,26 @@ class _CouponsListBodyState extends State<CouponsListBody> {
                 child: const Icon(Icons.delete, color: Colors.white),
               ),
               child: ListTile(
-                title: Text(coupon.code),
-                subtitle: Text('${coupon.discount}% - ważny do ${coupon.expiryDate.toString().split(' ')[0]} - ${coupon.issuer}'),
+                title: Row(
+                  children: [
+                    Text(coupon.code),
+                    if (coupon.isExpiringSoon()) ...[
+                      const SizedBox(width: 8),
+                      Icon(Icons.warning, color: Colors.orange, size: 20),
+                    ],
+                  ],
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('${coupon.discount}% - ważny do ${coupon.expiryDate.toString().split(' ')[0]} - ${coupon.issuer}'),
+                    if (coupon.isExpiringSoon())
+                      const Text(
+                        'UWAGA: Kupon wkrótce wygaśnie!',
+                        style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold),
+                      ),
+                  ],
+                ),
                 isThreeLine: true,
                 trailing: IconButton(
                   icon: const Icon(Icons.edit),
