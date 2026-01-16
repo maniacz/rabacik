@@ -17,6 +17,7 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
   String? _couponCode;
   String? _couponIssuer;
   double? _discount;
+  int? _updatedCouponId;
 
   @override
   void initState() {
@@ -128,7 +129,11 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
                         );
-                        Navigator.of(context).pop();
+                        if (id > 0) {
+                          Navigator.of(context).pop(id);
+                        } else {
+                          Navigator.of(context).pop();
+                        }
                       });
                     } else {
                       // Update existing coupon
@@ -139,7 +144,11 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
                         );
-                        Navigator.of(context).pop();
+                        if (isUpdateSuccessful) {
+                          Navigator.of(context).pop(coupon.id);
+                        } else {
+                          Navigator.of(context).pop();
+                        }
                       });
                     }
                   },

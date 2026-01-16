@@ -10,50 +10,81 @@ class CouponsListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Moje kupony rabatowe'),),
-      body: FutureBuilder(
-        future: getCoupons(),
-        builder: (context, snapshot) {
-          final List<Dismissible> listTiles = [];
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const CircularProgressIndicator();
-          } else if (snapshot.hasError) {
+      body: CouponsListBody(),
+    );
+  }
+
+}
+
+class CouponsListBody extends StatefulWidget {
+  @override
+  State<CouponsListBody> createState() => _CouponsListBodyState();
+}
+
+class _CouponsListBodyState extends State<CouponsListBody> {
+  late Future<List<Coupon>> _couponsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _couponsFuture = getCoupons();
+  }
+
+  Future<void> _refreshCoupons() async {
+    setState(() {
+      _couponsFuture = getCoupons();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<Coupon>>(
+      future: _couponsFuture,
+      builder: (context, snapshot) {
+        final List<Dismissible> listTiles = [];
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
             return Center(child: Text('Error ${snapshot.error}'),);
-          } else {
-            for (Coupon coupon in snapshot.data!) {
-              listTiles.add(Dismissible(
-                key: Key(coupon.id.toString()),
-                direction: DismissDirection.endToStart,
-                onDismissed: (direction) async {
-                  DbHelper helper = DbHelper();
-                  await helper.deleteCoupon(coupon.id!);
-                },
-                background: Container(
-                  color: Colors.red,
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: const Icon(Icons.delete, color: Colors.white),
+        } else {
+          for (Coupon coupon in snapshot.data!) {
+            listTiles.add(Dismissible(
+              key: Key(coupon.id.toString()),
+              direction: DismissDirection.endToStart,
+              onDismissed: (direction) async {
+                DbHelper helper = DbHelper();
+                await helper.deleteCoupon(coupon.id!);
+                await _refreshCoupons();
+              },
+              background: Container(
+                color: Colors.red,
+                alignment: Alignment.centerRight,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: const Icon(Icons.delete, color: Colors.white),
+              ),
+              child: ListTile(
+                title: Text(coupon.code),
+                subtitle: Text('${coupon.discount}% - ważny do ${coupon.expiryDate.toString().split(' ')[0]} - ${coupon.issuer}'),
+                isThreeLine: true,
+                trailing: IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: () async {
+                    final updatedCouponId = await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => AddCouponScreen(coupon: coupon),
+                      ),
+                    );
+                    if (updatedCouponId != null) {
+                      await _refreshCoupons();
+                    }
+                  },
                 ),
-                child: ListTile(
-                  title: Text(coupon.code),
-                  subtitle: Text('${coupon.discount}% - ważny do ${coupon.expiryDate.toString().split(' ')[0]} - ${coupon.issuer}'),
-                  isThreeLine: true,
-                  trailing: IconButton(
-                    icon: const Icon(Icons.edit),
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => AddCouponScreen(coupon: coupon),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ));
-            }
+              ),
+            ));
           }
-          return ListView(children: listTiles,);
         }
-      )
+        return ListView(children: listTiles,);
+      },
     );
   }
 
