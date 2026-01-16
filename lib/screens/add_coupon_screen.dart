@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rabacik/data/db_helper.dart';
 import 'package:rabacik/data/models/coupon.dart';
+import 'package:rabacik/data/notification_helper.dart';
 
 class AddCouponScreen extends StatefulWidget {
 
@@ -122,7 +123,7 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                     );
                     if (widget.coupon == null) {
                       // Add new coupon
-                      helper.insertCoupon(coupon).then((id) {
+                      helper.insertCoupon(coupon).then((id) async {
                         final message = (id > 0)
                             ? 'Dodano kupon o id: $id'
                             : 'Wystąpił błąd podczas dodawania kuponu';
@@ -130,6 +131,12 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                           SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
                         );
                         if (id > 0) {
+                          // Schedule local notification for expiry
+                          await NotificationHelper.scheduleCouponExpiryNotification(
+                            id: id,
+                            code: coupon.code,
+                            expiryDate: coupon.expiryDate,
+                          );
                           Navigator.of(context).pop(id);
                         } else {
                           Navigator.of(context).pop();
