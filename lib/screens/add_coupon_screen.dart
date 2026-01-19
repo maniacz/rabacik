@@ -95,9 +95,10 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
             const SizedBox(height: 20),
             TextField(
               controller: _discountController,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
                 labelText: 'Wpisz wartość rabatu (%)',
+                errorText: _discountError,
               ),
               keyboardType: TextInputType.number,
               inputFormatters: [
@@ -121,14 +122,6 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                 });
               },
             ),
-            if (_discountError != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: Text(
-                  _discountError!,
-                  style: const TextStyle(color: Colors.red),
-                ),
-              ),
             const SizedBox(height: 20),
             Row(
               children: [
