@@ -28,13 +28,13 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
   @override
   void initState() {
     super.initState();
-    _discountController = TextEditingController(text: _discount?.toString() ?? '');
     if (widget.coupon != null) {
       _couponCode = widget.coupon!.code;
       _couponIssuer = widget.coupon!.issuer;
       _selectedDate = widget.coupon!.expiryDate;
       _discount = widget.coupon!.discount;
     }
+    _discountController = TextEditingController(text: _discount?.toString() ?? '');
   }
 
   @override
