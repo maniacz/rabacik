@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:rabacik/data/db_helper.dart';
 import 'package:rabacik/data/models/coupon.dart';
 import 'package:rabacik/data/notification_helper.dart';
+import 'package:flutter/services.dart';
 
 class AddCouponScreen extends StatefulWidget {
 
@@ -17,18 +18,27 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
   DateTime? _selectedDate;
   String? _couponCode;
   String? _couponIssuer;
-  double? _discount;
+  int? _discount;
+  String? _discountError;
+  late TextEditingController _discountController;
   int? _updatedCouponId;
 
   @override
   void initState() {
     super.initState();
+    _discountController = TextEditingController(text: _discount?.toString() ?? '');
     if (widget.coupon != null) {
       _couponCode = widget.coupon!.code;
       _couponIssuer = widget.coupon!.issuer;
       _selectedDate = widget.coupon!.expiryDate;
       _discount = widget.coupon!.discount;
     }
+  }
+
+  @override
+  void dispose() {
+    _discountController.dispose();
+    super.dispose();
   }
   
   @override
@@ -66,16 +76,41 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
             ),
             const SizedBox(height: 20),
             TextField(
-              controller: TextEditingController(text: _discount?.toString()),
+              controller: _discountController,
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
                 labelText: 'Wpisz wartość rabatu (%)',
               ),
               keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(3),
+              ],
               onChanged: (value) {
-                _discount = double.tryParse(value);
+                int? val = int.tryParse(value);
+                setState(() {
+                  if (val != null && val >= 1 && val <= 100) {
+                    _discount = val;
+                    _discountError = null;
+                  } else {
+                    _discount = null;
+                    if (value.isNotEmpty) {
+                      _discountError = 'Wartość rabatu musi być liczbą całkowitą od 1 do 100';
+                    } else {
+                      _discountError = null;
+                    }
+                  }
+                });
               },
             ),
+            if (_discountError != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Text(
+                  _discountError!,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
             const SizedBox(height: 20),
             Row(
               children: [
@@ -118,7 +153,7 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                       id: widget.coupon?.id,
                       code: _couponCode ?? '',
                       issuer: _couponIssuer ?? '',
-                      discount: widget.coupon?.discount ?? 15.0,
+                      discount: _discount ?? 0,
                       expiryDate: _selectedDate ?? DateTime.now(),
                     );
                     if (widget.coupon == null) {

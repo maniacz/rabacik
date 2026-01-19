@@ -1,7 +1,7 @@
 class Coupon {
   final String code;
   final String issuer;
-  final double discount;
+  final int discount;
   final DateTime expiryDate;
   int? id;
 
@@ -16,7 +16,7 @@ class Coupon {
   Coupon.fromJSON(Map<String, dynamic> map)
     : code = map['code'] ?? '',
       issuer = map['issuer'] ?? '',
-      discount = map['discount']?.toDouble() ?? 0.0,
+      discount = map['discount'] ?? 0,
       expiryDate = DateTime.parse(map['expiryDate'] ?? DateTime.now().toIso8601String());
 
   bool isValid() {
