@@ -19,6 +19,8 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
   String? _couponCode;
   String? _couponIssuer;
   int? _discount;
+  String? _couponCodeError;
+  String? _couponIssuerError;
   String? _discountError;
   late TextEditingController _discountController;
   int? _updatedCouponId;
@@ -55,23 +57,39 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
           children: [
             TextField(
               controller: TextEditingController(text: _couponCode),
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
                 labelText: 'Wpisz kod rabatowy',
+                errorText: _couponCodeError,
               ),
               onChanged: (value) {
-                _couponCode = value;
+                setState(() {
+                  _couponCode = value;
+                  if (value.trim().isEmpty) {
+                    _couponCodeError = 'Kod rabatowy nie może być pusty';
+                  } else {
+                    _couponCodeError = null;
+                  }
+                });
               },
             ),
             const SizedBox(height: 20),
             TextField(
               controller: TextEditingController(text: _couponIssuer),
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
                 labelText: 'Gdzie działa kod rabatowy',
+                errorText: _couponIssuerError,
               ),
               onChanged: (value) {
-                _couponIssuer = value;
+                setState(() {
+                  _couponIssuer = value;
+                  if (value.trim().isEmpty) {
+                    _couponIssuerError = 'Pole nie może być puste';
+                  } else {
+                    _couponIssuerError = null;
+                  }
+                });
               },
             ),
             const SizedBox(height: 20),
@@ -148,6 +166,18 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                 ),
                 ElevatedButton(
                   onPressed: () {
+                    setState(() {
+                      _couponCodeError = (_couponCode == null || _couponCode!.trim().isEmpty)
+                          ? 'Kod rabatowy nie może być pusty'
+                          : null;
+                      _couponIssuerError = (_couponIssuer == null || _couponIssuer!.trim().isEmpty)
+                          ? 'Pole nie może być puste'
+                          : null;
+                    });
+                    if (_couponCodeError != null || _couponIssuerError != null || _discountError != null) {
+                      // Do not proceed if there are errors
+                      return;
+                    }
                     DbHelper helper = DbHelper();
                     Coupon coupon = Coupon(
                       id: widget.coupon?.id,
