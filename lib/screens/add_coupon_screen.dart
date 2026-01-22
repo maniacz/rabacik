@@ -23,6 +23,8 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
   String? _couponIssuerError;
   String? _discountError;
   late TextEditingController _discountController;
+  late TextEditingController _couponCodeController;
+  late TextEditingController _couponIssuerController;
   int? _updatedCouponId;
 
   @override
@@ -34,11 +36,15 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
       _selectedDate = widget.coupon!.expiryDate;
       _discount = widget.coupon!.discount;
     }
+    _couponCodeController = TextEditingController(text: _couponCode ?? '');
+    _couponIssuerController = TextEditingController(text: _couponIssuer ?? '');
     _discountController = TextEditingController(text: _discount?.toString() ?? '');
   }
 
   @override
   void dispose() {
+    _couponCodeController.dispose();
+    _couponIssuerController.dispose();
     _discountController.dispose();
     super.dispose();
   }
@@ -56,7 +62,7 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
           // spacing: 20, // spacing is not a property of Column
           children: [
             TextField(
-              controller: TextEditingController(text: _couponCode),
+              controller: _couponCodeController,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
                 labelText: 'Wpisz kod rabatowy',
@@ -75,7 +81,7 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
             ),
             const SizedBox(height: 20),
             TextField(
-              controller: TextEditingController(text: _couponIssuer),
+              controller: _couponIssuerController,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
                 labelText: 'Gdzie działa kod rabatowy',
