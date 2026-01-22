@@ -158,7 +158,7 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                   child: const Text('Anuluj'),
                 ),
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     setState(() {
                       _couponCodeError = (_couponCode == null || _couponCode!.trim().isEmpty)
                           ? 'Kod rabatowy nie może być pusty'
@@ -171,13 +171,37 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                       // Do not proceed if there are errors
                       return;
                     }
+                    // If expiry date is not selected, show confirmation dialog
+                    if (_selectedDate == null) {
+                      final shouldSave = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Brak daty ważności'),
+                          content: const Text('Czy na pewno chcesz dodać kupon bez daty ważności?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: const Text('Nie'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              child: const Text('Tak'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (shouldSave != true) {
+                        // User cancelled, return to editing
+                        return;
+                      }
+                    }
                     DbHelper helper = DbHelper();
                     Coupon coupon = Coupon(
                       id: widget.coupon?.id,
                       code: _couponCode ?? '',
                       issuer: _couponIssuer ?? '',
                       discount: _discount ?? 0,
-                      expiryDate: _selectedDate ?? DateTime.now(),
+                      expiryDate: _selectedDate,
                     );
                     if (widget.coupon == null) {
                       // Add new coupon
@@ -190,11 +214,13 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                         );
                         if (id > 0) {
                           // Schedule local notification for expiry
-                          await NotificationHelper.scheduleCouponExpiryNotification(
-                            id: id,
-                            code: coupon.code,
-                            expiryDate: coupon.expiryDate,
-                          );
+                          if (coupon.expiryDate != null) {
+                            await NotificationHelper.scheduleCouponExpiryNotification(
+                              id: id,
+                              code: coupon.code,
+                              expiryDate: coupon.expiryDate!,
+                            );
+                          }
                           Navigator.of(context).pop(id);
                         } else {
                           Navigator.of(context).pop();

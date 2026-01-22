@@ -48,6 +48,10 @@ class _CouponsListBodyState extends State<CouponsListBody> {
             return Center(child: Text('Error ${snapshot.error}'),);
         } else {
           for (Coupon coupon in snapshot.data!) {
+            String couponText = coupon.expiryDate == null
+            ? '${coupon.discount}% - bez daty ważności - ${coupon.issuer}'
+            : '${coupon.discount}% - ważny do ${coupon.expiryDate.toString().split(' ')[0]} - ${coupon.issuer}';
+
             listTiles.add(Dismissible(
               key: Key(coupon.id.toString()),
               direction: DismissDirection.endToStart,
@@ -75,7 +79,7 @@ class _CouponsListBodyState extends State<CouponsListBody> {
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('${coupon.discount}% - ważny do ${coupon.expiryDate.toString().split(' ')[0]} - ${coupon.issuer}'),
+                    Text(couponText),
                     if (coupon.isExpiringSoon())
                       const Text(
                         'UWAGA: Kupon wkrótce wygaśnie!',
