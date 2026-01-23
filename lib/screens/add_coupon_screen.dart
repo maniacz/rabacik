@@ -114,19 +114,18 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
               onChanged: (value) {
                 int? val = int.tryParse(value);
                 setState(() {
-                  if (val != null && val >= 1 && val <= 100) {
+                  if (value.isEmpty) {
+                    _discount = null;
+                    _discountError = 'Wartość rabatu nie może być pusta';
+                  } else if (val != null && val >= 1 && val <= 100) {
                     _discount = val;
                     _discountError = null;
                   } else {
                     _discount = null;
-                    if (value.isNotEmpty) {
-                      _discountError = 'Wartość rabatu musi być liczbą całkowitą od 1 do 100';
-                    } else {
-                      _discountError = null;
-                    }
+                    _discountError = 'Wartość rabatu musi być liczbą całkowitą od 1 do 100';
                   }
                 });
-              },
+              }9,
             ),
             const SizedBox(height: 20),
             Row(
@@ -172,6 +171,9 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                       _couponIssuerError = (_couponIssuer == null || _couponIssuer!.trim().isEmpty)
                           ? 'Pole nie może być puste'
                           : null;
+                      _discountError = (_discount == null)
+                          ? 'Wartość rabatu nie może być pusta'
+                          : _discountError;
                     });
                     if (_couponCodeError != null || _couponIssuerError != null || _discountError != null) {
                       // Do not proceed if there are errors
