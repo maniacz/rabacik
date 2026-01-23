@@ -125,7 +125,7 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                     _discountError = 'Wartość rabatu musi być liczbą całkowitą od 1 do 100';
                   }
                 });
-              }9,
+              },
             ),
             const SizedBox(height: 20),
             Row(

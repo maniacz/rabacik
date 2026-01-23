@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rabacik/screens/add_coupon_screen.dart';
 import 'package:rabacik/screens/coupons_list_screen.dart';
+import 'package:rabacik/screens/scan_coupon_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -42,6 +43,19 @@ class HomeScreen extends StatelessWidget {
                 );
               },
               child: Text('Moje kody rabatowe'))
+          ),
+          Align(
+            alignment: Alignment(0, 0.4),
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const ScanCouponScreen(),
+                  ),
+                );
+              },
+              child: Text('Skanuj kupon'),
+            ),
           ),
         ],
       ),
