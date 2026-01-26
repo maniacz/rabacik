@@ -10,6 +10,8 @@ class ScanCouponScreen extends StatefulWidget {
   State<ScanCouponScreen> createState() => _ScanCouponScreenState();
 }
 
+//TODO: Dodaj przycisk do wyboru zdjęcia z galerii
+
 class _ScanCouponScreenState extends State<ScanCouponScreen> {
   File? _image;
   List<String> _recognizedLines = [];
@@ -18,9 +20,11 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
   int? _selectedIssuerIdx;
   int? _selectedDateIdx;
 
-  Future<void> _pickImage() async {
+  Future<void> _pickImage({bool fromGallery = false}) async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.camera);
+    final pickedFile = await picker.pickImage(
+      source: fromGallery ? ImageSource.gallery : ImageSource.camera,
+    );
     if (pickedFile != null) {
       setState(() {
         _image = File(pickedFile.path);
@@ -52,9 +56,19 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
           children: [
             if (_image != null)
               Image.file(_image!, height: 200),
-            ElevatedButton(
-              onPressed: _pickImage,
-              child: const Text('Zrób zdjęcie kuponu'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: () => _pickImage(fromGallery: false),
+                  child: const Text('Zrób zdjęcie kuponu'),
+                ),
+                const SizedBox(width: 16),
+                ElevatedButton(
+                  onPressed: () => _pickImage(fromGallery: true),
+                  child: const Text('Wybierz z galerii'),
+                ),
+              ],
             ),
             if (_isLoading) const CircularProgressIndicator(),
             if (_recognizedLines.isNotEmpty) ...[

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:rabacik/screens/add_coupon_screen.dart';
 import 'package:rabacik/screens/coupons_list_screen.dart';
 import 'package:rabacik/screens/scan_coupon_screen.dart';
+import 'package:rabacik/data/models/coupon.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -47,12 +48,35 @@ class HomeScreen extends StatelessWidget {
           Align(
             alignment: Alignment(0, 0.4),
             child: ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).push(
+              onPressed: () async {
+                final result = await Navigator.of(context).push<Map<String, String>>(
                   MaterialPageRoute(
                     builder: (context) => const ScanCouponScreen(),
                   ),
                 );
+                if (result != null) {
+                  String code = result['code'] ?? '';
+                  String issuer = result['issuer'] ?? '';
+                  String expiry = result['expiry'] ?? '';
+                  DateTime? expiryDate;
+                  try {
+                    expiryDate = DateTime.tryParse(expiry);
+                  } catch (_) {
+                    expiryDate = null;
+                  }
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => AddCouponScreen(
+                        coupon: Coupon(
+                          code: code,
+                          issuer: issuer,
+                          discount: 0,
+                          expiryDate: expiryDate,
+                        ),
+                      ),
+                    ),
+                  );
+                }
               },
               child: Text('Skanuj kupon'),
             ),
