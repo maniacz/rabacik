@@ -91,8 +91,21 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
                                     final type = await showDialog<String>(
                                       context: context,
                                       builder: (context) => SimpleDialog(
-                                        title: Text('Wybierz typ danych'),
+                                        title: const Text('Wybierz typ danych'),
                                         children: [
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                                            child: Text(
+                                              line.text,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                                color: Colors.black87,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
+                                          const Divider(),
                                           SimpleDialogOption(
                                             onPressed: () => Navigator.pop(context, 'code'),
                                             child: const Text('Kod kuponu'),
