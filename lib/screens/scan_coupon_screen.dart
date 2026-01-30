@@ -11,8 +11,6 @@ class ScanCouponScreen extends StatefulWidget {
   State<ScanCouponScreen> createState() => _ScanCouponScreenState();
 }
 
-//TODO: Dodaj przycisk do wyboru zdjęcia z galerii
-
 class _ScanCouponScreenState extends State<ScanCouponScreen> {
   File? _image;
   List<TextLine> _recognizedLines = [];
@@ -153,7 +151,37 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
                   },
                 ),
               ),
-            if (_isLoading) const CircularProgressIndicator(),
+            if (_recognizedLines.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  String code = '';
+                  String issuer = '';
+                  String discount = '';
+                  String expiry = '';
+                  _selectedTypes.forEach((index, type) {
+                    final lineText = _recognizedLines[index].text;
+                    if (type == 'code') {
+                      code = lineText;
+                    } else if (type == 'issuer') {
+                      issuer = lineText;
+                    } else if (type == 'discount') {
+                      discount = lineText;
+                    } else if (type == 'expiry') {
+                      expiry = lineText;
+                    }
+                  });
+                  Navigator.of(context).pop({
+                    'code': code,
+                    'issuer': issuer,
+                    'discount': discount,
+                    'expiry': expiry,
+                  });
+                },
+                child: const Text('Zapisz kupon'),
+              ),
+              const SizedBox(height: 24),
+            ],
           ],
         ),
       ),
