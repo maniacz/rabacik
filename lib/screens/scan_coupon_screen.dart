@@ -53,6 +53,21 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: () => _pickImage(fromGallery: false),
+                  child: const Text('Zrób zdjęcie kuponu'),
+                ),
+                const SizedBox(width: 16),
+                ElevatedButton(
+                  onPressed: () => _pickImage(fromGallery: true),
+                  child: const Text('Wybierz z galerii'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
             if (_image != null)
               Expanded(
                 child: FutureBuilder<Size>(
@@ -66,7 +81,7 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
                       builder: (context, constraints) {
                         final displayWidth = constraints.maxWidth;
                         final displayHeight = constraints.maxHeight;
-                        // Oblicz skalę i przesunięcie, aby dopasować obraz do kontenera (BoxFit.contain)
+                        // Calculate scale and offset to fit image in the available space
                         final scale = _calculateScale(imageSize, Size(displayWidth, displayHeight));
                         final offset = _calculateOffset(imageSize, Size(displayWidth, displayHeight));
                         return Stack(
@@ -87,21 +102,20 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
                                 width: width,
                                 height: height,
                                 child: GestureDetector(
-                                onTap: () async {
-                                  final result = await showDialog<Map<String, dynamic>>(
-                                    context: context,
-                                    builder: (context) {
-                                      return _SelectableTextDialog(line: line);
-                                    },
-                                  );
-                                  if (result != null && result['type'] != null) {
-                                    setState(() {
-                                      _selectedTypes[index] = result['type'];
-                                      // Możesz też zapisać result['text'] jeśli chcesz przechowywać wybrany fragment
-                                    });
-                                  }
-                                },
-                                child: Container(
+                                  onTap: () async {
+                                    final result = await showDialog<Map<String, dynamic>>(
+                                      context: context,
+                                      builder: (context) {
+                                        return _SelectableTextDialog(line: line);
+                                      },
+                                    );
+                                    if (result != null && result['type'] != null) {
+                                      setState(() {
+                                        _selectedTypes[index] = result['type'];
+                                      });
+                                    }
+                                  },
+                                  child: Container(
                                     decoration: BoxDecoration(
                                       border: Border.all(
                                         color: _selectedTypes[index] == 'code'
@@ -139,20 +153,6 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
                   },
                 ),
               ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  onPressed: () => _pickImage(fromGallery: false),
-                  child: const Text('Zrób zdjęcie kuponu'),
-                ),
-                const SizedBox(width: 16),
-                ElevatedButton(
-                  onPressed: () => _pickImage(fromGallery: true),
-                  child: const Text('Wybierz z galerii'),
-                ),
-              ],
-            ),
             if (_isLoading) const CircularProgressIndicator(),
           ],
         ),
