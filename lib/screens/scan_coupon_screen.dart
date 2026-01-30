@@ -87,51 +87,21 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
                                 width: width,
                                 height: height,
                                 child: GestureDetector(
-                                  onTap: () async {
-                                    final type = await showDialog<String>(
-                                      context: context,
-                                      builder: (context) => SimpleDialog(
-                                        title: const Text('Wybierz typ danych'),
-                                        children: [
-                                          Padding(
-                                            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                                            child: Text(
-                                              line.text,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16,
-                                                color: Colors.black87,
-                                              ),
-                                              textAlign: TextAlign.center,
-                                            ),
-                                          ),
-                                          const Divider(),
-                                          SimpleDialogOption(
-                                            onPressed: () => Navigator.pop(context, 'code'),
-                                            child: const Text('Kod kuponu'),
-                                          ),
-                                          SimpleDialogOption(
-                                            onPressed: () => Navigator.pop(context, 'issuer'),
-                                            child: const Text('Wystawca kuponu'),
-                                          ),
-                                          SimpleDialogOption(
-                                            onPressed: () => Navigator.pop(context, 'discount'),
-                                            child: const Text('Wartość zniżki'),
-                                          ),
-                                          SimpleDialogOption(
-                                            onPressed: () => Navigator.pop(context, 'expiry'),
-                                            child: const Text('Data ważności'),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                    if (type != null) {
-                                      setState(() {
-                                        _selectedTypes[index] = type;
-                                      });
-                                    }
-                                  },
-                                  child: Container(
+                                onTap: () async {
+                                  final result = await showDialog<Map<String, dynamic>>(
+                                    context: context,
+                                    builder: (context) {
+                                      return _SelectableTextDialog(line: line);
+                                    },
+                                  );
+                                  if (result != null && result['type'] != null) {
+                                    setState(() {
+                                      _selectedTypes[index] = result['type'];
+                                      // Możesz też zapisać result['text'] jeśli chcesz przechowywać wybrany fragment
+                                    });
+                                  }
+                                },
+                                child: Container(
                                     decoration: BoxDecoration(
                                       border: Border.all(
                                         color: _selectedTypes[index] == 'code'
@@ -216,5 +186,102 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
     final dx = (displaySize.width - imageSize.width * scale) / 2;
     final dy = (displaySize.height - imageSize.height * scale) / 2;
     return Offset(dx, dy);
+  }
+}
+
+// --- helper widget for selectable text dialog ---
+class _SelectableTextDialog extends StatefulWidget {
+  final TextLine line;
+  const _SelectableTextDialog({required this.line});
+  @override
+  State<_SelectableTextDialog> createState() => _SelectableTextDialogState();
+}
+
+class _SelectableTextDialogState extends State<_SelectableTextDialog> {
+  bool showTextField = false;
+  late TextEditingController textController;
+  late FocusNode focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    textController = TextEditingController(text: widget.line.text);
+    focusNode = FocusNode();
+  }
+
+  @override
+  void dispose() {
+    textController.dispose();
+    focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SimpleDialog(
+      title: const Text('Wybierz typ danych'),
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: showTextField
+              ? TextField(
+                  controller: textController,
+                  focusNode: focusNode,
+                  maxLines: null,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Zaznacz fragment tekstu',
+                  ),
+                )
+              : GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      showTextField = true;
+                      // Ustaw focus na TextField po przełączeniu
+                      Future.delayed(const Duration(milliseconds: 100), () {
+                        focusNode.requestFocus();
+                      });
+                    });
+                  },
+                  child: Text(
+                    widget.line.text,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.black87,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+        ),
+        const Divider(),
+        SimpleDialogOption(
+          onPressed: () => Navigator.pop(context, {'type': 'code', 'text': textController.selection.isValid && !textController.selection.isCollapsed ? textController.text.substring(textController.selection.start, textController.selection.end) : textController.text}),
+          child: const Text('Kod kuponu'),
+        ),
+        SimpleDialogOption(
+          onPressed: () => Navigator.pop(context, {'type': 'issuer', 'text': textController.selection.isValid && !textController.selection.isCollapsed ? textController.text.substring(textController.selection.start, textController.selection.end) : textController.text}),
+          child: const Text('Wystawca kuponu'),
+        ),
+        SimpleDialogOption(
+          onPressed: () => Navigator.pop(context, {'type': 'discount', 'text': textController.selection.isValid && !textController.selection.isCollapsed ? textController.text.substring(textController.selection.start, textController.selection.end) : textController.text}),
+          child: const Text('Wartość zniżki'),
+        ),
+        SimpleDialogOption(
+          onPressed: () => Navigator.pop(context, {'type': 'expiry', 'text': textController.selection.isValid && !textController.selection.isCollapsed ? textController.text.substring(textController.selection.start, textController.selection.end) : textController.text}),
+          child: const Text('Data ważności'),
+        ),
+        const SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Anuluj'),
+          ),
+        ),
+        const SizedBox(height: 8),
+      ],
+    );
   }
 }
