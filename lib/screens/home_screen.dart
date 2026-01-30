@@ -58,6 +58,7 @@ class HomeScreen extends StatelessWidget {
                   String code = result['code'] ?? '';
                   String issuer = result['issuer'] ?? '';
                   String expiry = result['expiry'] ?? '';
+                  int discount = int.tryParse(result['discount'] ?? '') ?? 0;
                   DateTime? expiryDate;
                   try {
                     expiryDate = DateTime.tryParse(expiry);
@@ -70,7 +71,7 @@ class HomeScreen extends StatelessWidget {
                         coupon: Coupon(
                           code: code,
                           issuer: issuer,
-                          discount: 0,
+                          discount: discount,
                           expiryDate: expiryDate,
                         ),
                       ),

@@ -166,7 +166,8 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
                     } else if (type == 'issuer') {
                       issuer = lineText;
                     } else if (type == 'discount') {
-                      discount = lineText;
+                      final cleaned = lineText.replaceAll(RegExp(r'[-%\\s]'), '');
+                      discount = int.tryParse(cleaned)?.toString() ?? '';
                     } else if (type == 'expiry') {
                       expiry = lineText;
                     }
