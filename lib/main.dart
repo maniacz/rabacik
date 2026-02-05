@@ -1,7 +1,10 @@
 
+
 import 'package:flutter/material.dart';
 import 'package:rabacik/screens/home_screen.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
+final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
@@ -25,8 +28,9 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: HomeScreen()
+    return MaterialApp(
+      home: const HomeScreen(),
+      navigatorObservers: [routeObserver],
     );
   }
 }

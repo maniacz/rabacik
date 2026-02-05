@@ -3,6 +3,8 @@ import 'package:rabacik/data/db_helper.dart';
 import 'package:rabacik/data/models/coupon.dart';
 import 'package:rabacik/data/notification_helper.dart';
 import 'package:flutter/services.dart';
+import '../route_logger.dart';
+import '../main.dart';
 
 class AddCouponScreen extends StatefulWidget {
 
@@ -15,6 +17,14 @@ class AddCouponScreen extends StatefulWidget {
 }
 
 class _AddCouponScreenState extends State<AddCouponScreen> {
+    final LoggingRouteAware _routeAware = LoggingRouteAware('AddCouponScreen');
+
+    @override
+    void didChangeDependencies() {
+      super.didChangeDependencies();
+      routeObserver.subscribe(_routeAware, ModalRoute.of(context)! as PageRoute);
+    }
+
   DateTime? _selectedDate;
   String? _couponCode;
   String? _couponIssuer;
@@ -46,6 +56,7 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
     _couponCodeController.dispose();
     _couponIssuerController.dispose();
     _discountController.dispose();
+    routeObserver.unsubscribe(_routeAware);
     super.dispose();
   }
   
