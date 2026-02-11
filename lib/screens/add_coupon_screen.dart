@@ -9,7 +9,8 @@ import '../main.dart';
 class AddCouponScreen extends StatefulWidget {
 
   final Coupon? coupon;
-  const AddCouponScreen({super.key, this.coupon});
+  final bool isEditMode;
+  const AddCouponScreen({super.key, this.coupon, this.isEditMode = false});
 
   @override
   State<StatefulWidget> createState() => _AddCouponScreenState();
@@ -64,7 +65,7 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.coupon == null ? 'Dodaj kod rabatowy' : 'Edytuj kod rabatowy'),
+        title: Text(widget.isEditMode ? 'Edytuj kod rabatowy' : 'Dodaj kod rabatowy'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(25.0),
@@ -185,6 +186,9 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                       _discountError = (_discount == null)
                           ? 'Wartość rabatu nie może być pusta'
                           : _discountError;
+                      _discountError = (_discount != null && (_discount! < 1 || _discount! > 100))
+                          ? 'Wartość rabatu musi być liczbą całkowitą od 1 do 100'
+                          : _discountError;
                     });
                     if (_couponCodeError != null || _couponIssuerError != null || _discountError != null) {
                       // Do not proceed if there are errors
@@ -222,7 +226,7 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                       discount: _discount ?? 0,
                       expiryDate: _selectedDate,
                     );
-                    if (widget.coupon == null) {
+                    if (!widget.isEditMode) {
                       // Add new coupon
                       helper.insertCoupon(coupon).then((id) async {
                         final message = (id > 0)
@@ -264,7 +268,7 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                       });
                     }
                   },
-                  child: Text(widget.coupon == null ? 'Zapisz' : 'Aktualizuj'),
+                  child: Text(widget.isEditMode ? 'Aktualizuj' : 'Zapisz'),
                 ),
               ],
             ),

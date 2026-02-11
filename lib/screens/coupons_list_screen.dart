@@ -93,7 +93,7 @@ class _CouponsListBodyState extends State<CouponsListBody> {
                   onPressed: () async {
                     final updatedCouponId = await Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => AddCouponScreen(coupon: coupon),
+                        builder: (context) => AddCouponScreen(coupon: coupon, isEditMode: true),
                       ),
                     );
                     if (updatedCouponId != null) {
