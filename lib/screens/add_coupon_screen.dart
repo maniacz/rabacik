@@ -240,9 +240,10 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                               expiryDate: coupon.expiryDate!,
                             );
                           }
-                          Navigator.of(context).pop(id);
+                          // Pozostaw użytkownika na AddCouponScreen
+                          // Możesz dodać informację o sukcesie
                         } else {
-                          Navigator.of(context).pop();
+                          // Możesz dodać informację o błędzie
                         }
                       });
                     } else {
@@ -255,9 +256,10 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                           SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
                         );
                         if (isUpdateSuccessful) {
-                          Navigator.of(context).pop(coupon.id);
+                          // Pozostaw użytkownika na AddCouponScreen
+                          // Możesz dodać informację o sukcesie
                         } else {
-                          Navigator.of(context).pop();
+                          // Możesz dodać informację o błędzie
                         }
                       });
                     }

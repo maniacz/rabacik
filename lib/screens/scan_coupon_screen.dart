@@ -3,19 +3,29 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:rabacik/data/models/coupon.dart';
+import 'package:rabacik/screens/add_coupon_screen.dart'; // Import AddCouponScreen
 
 class ScanCouponScreen extends StatefulWidget {
-  const ScanCouponScreen({super.key});
+  final File imageFile;
+  const ScanCouponScreen({super.key, required this.imageFile});
 
   @override
   State<ScanCouponScreen> createState() => _ScanCouponScreenState();
 }
 
 class _ScanCouponScreenState extends State<ScanCouponScreen> {
-  File? _image;
+  late File _image;
   List<TextLine> _recognizedLines = [];
   bool _isLoading = false;
   Map<int, String> _selectedTypes = {};
+  @override
+  void initState() {
+    super.initState();
+    _image = widget.imageFile;
+    _recognizedLines = [];
+    _recognizeText(_image);
+  }
 
   Future<void> _pickImage({bool fromGallery = false}) async {
     final picker = ImagePicker();
@@ -51,20 +61,6 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  onPressed: () => _pickImage(fromGallery: false),
-                  child: const Text('Zrób zdjęcie kuponu'),
-                ),
-                const SizedBox(width: 16),
-                ElevatedButton(
-                  onPressed: () => _pickImage(fromGallery: true),
-                  child: const Text('Wybierz z galerii'),
-                ),
-              ],
-            ),
             const SizedBox(height: 16),
             if (_image != null)
               Expanded(
@@ -172,12 +168,25 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
                       expiry = lineText;
                     }
                   });
-                  Navigator.of(context).pop({
-                    'code': code,
-                    'issuer': issuer,
-                    'discount': discount,
-                    'expiry': expiry,
-                  });
+                  int discountInt = int.tryParse(discount) ?? 0;
+                  DateTime? expiryDate;
+                  try {
+                    expiryDate = DateTime.tryParse(expiry);
+                  } catch (_) {
+                    expiryDate = null;
+                  }
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => AddCouponScreen(
+                        coupon: Coupon(
+                          code: code,
+                          issuer: issuer,
+                          discount: discountInt,
+                          expiryDate: expiryDate,
+                        ),
+                      ),
+                    ),
+                  );
                 },
                 child: const Text('Zapisz kupon'),
               ),

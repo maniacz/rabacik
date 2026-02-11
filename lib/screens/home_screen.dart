@@ -3,6 +3,8 @@ import 'package:rabacik/screens/add_coupon_screen.dart';
 import 'package:rabacik/screens/coupons_list_screen.dart';
 import 'package:rabacik/screens/scan_coupon_screen.dart';
 import 'package:rabacik/data/models/coupon.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -47,39 +49,41 @@ class HomeScreen extends StatelessWidget {
           ),
           Align(
             alignment: Alignment(0, 0.4),
-            child: ElevatedButton(
-              onPressed: () async {
-                final result = await Navigator.of(context).push<Map<String, String>>(
-                  MaterialPageRoute(
-                    builder: (context) => const ScanCouponScreen(),
-                  ),
-                );
-                if (result != null) {
-                  String code = result['code'] ?? '';
-                  String issuer = result['issuer'] ?? '';
-                  String expiry = result['expiry'] ?? '';
-                  int discount = int.tryParse(result['discount'] ?? '') ?? 0;
-                  DateTime? expiryDate;
-                  try {
-                    expiryDate = DateTime.tryParse(expiry);
-                  } catch (_) {
-                    expiryDate = null;
-                  }
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => AddCouponScreen(
-                        coupon: Coupon(
-                          code: code,
-                          issuer: issuer,
-                          discount: discount,
-                          expiryDate: expiryDate,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: () async {
+                    final picker = ImagePicker();
+                    final pickedFile = await picker.pickImage(source: ImageSource.camera);
+                    if (pickedFile != null) {
+                      final imageFile = File(pickedFile.path);
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => ScanCouponScreen(imageFile: imageFile),
                         ),
-                      ),
-                    ),
-                  );
-                }
-              },
-              child: Text('Skanuj kupon'),
+                      );
+                    }
+                  },
+                  child: Text('Zrób zdjęcie kuponu'),
+                ),
+                const SizedBox(width: 16),
+                ElevatedButton(
+                  onPressed: () async {
+                    final picker = ImagePicker();
+                    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+                    if (pickedFile != null) {
+                      final imageFile = File(pickedFile.path);
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => ScanCouponScreen(imageFile: imageFile),
+                        ),
+                      );
+                    }
+                  },
+                  child: Text('Wybierz z galerii'),
+                ),
+              ],
             ),
           ),
         ],
