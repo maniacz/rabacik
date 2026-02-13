@@ -278,7 +278,7 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                       // Update existing coupon
                       helper.updateCoupon(coupon).then((isUpdateSuccessful) {
                         final message = (isUpdateSuccessful)
-                            ? 'Zaktualizowano kupon'
+                            ? 'Zaktualizowano kupon od ${coupon.issuer}'
                             : 'Wystąpił błąd podczas aktualizacji kuponu';
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -287,8 +287,9 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                           ),
                         );
                         if (isUpdateSuccessful) {
-                          // Pozostaw użytkownika na AddCouponScreen
-                          // Możesz dodać informację o sukcesie
+                          Navigator.of(
+                            context,
+                          ).pop();
                         } else {
                           _logger.log('Błąd podczas aktualizacji kuponu', error: 'updateCoupon zwrócił false');
                         }
