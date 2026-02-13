@@ -7,24 +7,22 @@ import '../route_logger.dart';
 import '../main.dart';
 
 class AddCouponScreen extends StatefulWidget {
-
   final Coupon? coupon;
   final bool isEditMode;
   const AddCouponScreen({super.key, this.coupon, this.isEditMode = false});
 
   @override
   State<StatefulWidget> createState() => _AddCouponScreenState();
-
 }
 
 class _AddCouponScreenState extends State<AddCouponScreen> {
-    final LoggingRouteAware _routeAware = LoggingRouteAware('AddCouponScreen');
+  final LoggingRouteAware _routeAware = LoggingRouteAware('AddCouponScreen');
 
-    @override
-    void didChangeDependencies() {
-      super.didChangeDependencies();
-      routeObserver.subscribe(_routeAware, ModalRoute.of(context)! as PageRoute);
-    }
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(_routeAware, ModalRoute.of(context)! as PageRoute);
+  }
 
   DateTime? _selectedDate;
   String? _couponCode;
@@ -49,7 +47,9 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
     }
     _couponCodeController = TextEditingController(text: _couponCode ?? '');
     _couponIssuerController = TextEditingController(text: _couponIssuer ?? '');
-    _discountController = TextEditingController(text: _discount?.toString() ?? '');
+    _discountController = TextEditingController(
+      text: _discount?.toString() ?? '',
+    );
   }
 
   @override
@@ -60,12 +60,14 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
     routeObserver.unsubscribe(_routeAware);
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isEditMode ? 'Edytuj kod rabatowy' : 'Dodaj kod rabatowy'),
+        title: Text(
+          widget.isEditMode ? 'Edytuj kod rabatowy' : 'Dodaj kod rabatowy',
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(25.0),
@@ -134,7 +136,8 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                     _discountError = null;
                   } else {
                     _discount = null;
-                    _discountError = 'Wartość rabatu musi być liczbą całkowitą od 1 do 100';
+                    _discountError =
+                        'Wartość rabatu musi być liczbą całkowitą od 1 do 100';
                   }
                 });
               },
@@ -159,9 +162,11 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                   },
                   child: const Text('Wybierz datę'),
                 ),
-                Text(_selectedDate == null
-                    ? 'Nie wybrano daty'
-                    : '\t${_selectedDate!.day}-${_selectedDate!.month}-${_selectedDate!.year}'),
+                Text(
+                  _selectedDate == null
+                      ? 'Nie wybrano daty'
+                      : '\t${_selectedDate!.day}-${_selectedDate!.month}-${_selectedDate!.year}',
+                ),
               ],
             ),
             const SizedBox(height: 20),
@@ -177,20 +182,27 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                 ElevatedButton(
                   onPressed: () async {
                     setState(() {
-                      _couponCodeError = (_couponCode == null || _couponCode!.trim().isEmpty)
+                      _couponCodeError =
+                          (_couponCode == null || _couponCode!.trim().isEmpty)
                           ? 'Kod rabatowy nie może być pusty'
                           : null;
-                      _couponIssuerError = (_couponIssuer == null || _couponIssuer!.trim().isEmpty)
+                      _couponIssuerError =
+                          (_couponIssuer == null ||
+                              _couponIssuer!.trim().isEmpty)
                           ? 'Pole nie może być puste'
                           : null;
                       _discountError = (_discount == null)
                           ? 'Wartość rabatu nie może być pusta'
                           : _discountError;
-                      _discountError = (_discount != null && (_discount! < 1 || _discount! > 100))
+                      _discountError =
+                          (_discount != null &&
+                              (_discount! < 1 || _discount! > 100))
                           ? 'Wartość rabatu musi być liczbą całkowitą od 1 do 100'
                           : _discountError;
                     });
-                    if (_couponCodeError != null || _couponIssuerError != null || _discountError != null) {
+                    if (_couponCodeError != null ||
+                        _couponIssuerError != null ||
+                        _discountError != null) {
                       // Do not proceed if there are errors
                       return;
                     }
@@ -200,7 +212,9 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                         context: context,
                         builder: (context) => AlertDialog(
                           title: const Text('Brak daty ważności'),
-                          content: const Text('Czy na pewno chcesz dodać kupon bez daty ważności?'),
+                          content: const Text(
+                            'Czy na pewno chcesz dodać kupon bez daty ważności?',
+                          ),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.of(context).pop(false),
@@ -233,7 +247,10 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                             ? 'Dodano kupon o id: $id'
                             : 'Wystąpił błąd podczas dodawania kuponu';
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
+                          SnackBar(
+                            content: Text(message),
+                            duration: const Duration(seconds: 2),
+                          ),
                         );
                         if (id > 0) {
                           // Schedule local notification for expiry
@@ -244,8 +261,10 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                               expiryDate: coupon.expiryDate!,
                             );
                           }
-                            // Powrót na ekran startowy po dodaniu kuponu
-                            Navigator.of(context).popUntil((route) => route.isFirst);
+                          // Powrót na ekran startowy po dodaniu kuponu
+                          Navigator.of(
+                            context,
+                          ).popUntil((route) => route.isFirst);
                         } else {
                           // Możesz dodać informację o błędzie
                         }
@@ -257,7 +276,10 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                             ? 'Zaktualizowano kupon'
                             : 'Wystąpił błąd podczas aktualizacji kuponu';
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
+                          SnackBar(
+                            content: Text(message),
+                            duration: const Duration(seconds: 2),
+                          ),
                         );
                         if (isUpdateSuccessful) {
                           // Pozostaw użytkownika na AddCouponScreen
