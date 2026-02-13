@@ -5,6 +5,8 @@ import 'package:rabacik/data/notification_helper.dart';
 import 'package:flutter/services.dart';
 import '../route_logger.dart';
 import '../main.dart';
+import 'package:rabacik/data/logger/local_logger.dart';
+import 'package:rabacik/data/logger/logger.dart';
 
 class AddCouponScreen extends StatefulWidget {
   final Coupon? coupon;
@@ -17,6 +19,7 @@ class AddCouponScreen extends StatefulWidget {
 
 class _AddCouponScreenState extends State<AddCouponScreen> {
   final LoggingRouteAware _routeAware = LoggingRouteAware('AddCouponScreen');
+  final Logger _logger = LocalLogger();
 
   @override
   void didChangeDependencies() {
@@ -266,8 +269,10 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                             context,
                           ).popUntil((route) => route.isFirst);
                         } else {
-                          // Możesz dodać informację o błędzie
+                          _logger.log('Błąd podczas dodawania kuponu', error: 'insertCoupon zwrócił id <= 0');
                         }
+                      }).catchError((error, stackTrace) {
+                        _logger.log('Wyjątek podczas dodawania kuponu', error: error, stackTrace: stackTrace);
                       });
                     } else {
                       // Update existing coupon
@@ -285,8 +290,10 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                           // Pozostaw użytkownika na AddCouponScreen
                           // Możesz dodać informację o sukcesie
                         } else {
-                          // Możesz dodać informację o błędzie
+                          _logger.log('Błąd podczas aktualizacji kuponu', error: 'updateCoupon zwrócił false');
                         }
+                      }).catchError((error, stackTrace) {
+                        _logger.log('Wyjątek podczas aktualizacji kuponu', error: error, stackTrace: stackTrace);
                       });
                     }
                   },
