@@ -244,8 +244,8 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                               expiryDate: coupon.expiryDate!,
                             );
                           }
-                          // Pozostaw użytkownika na AddCouponScreen
-                          // Możesz dodać informację o sukcesie
+                            // Powrót na ekran startowy po dodaniu kuponu
+                            Navigator.of(context).popUntil((route) => route.isFirst);
                         } else {
                           // Możesz dodać informację o błędzie
                         }
