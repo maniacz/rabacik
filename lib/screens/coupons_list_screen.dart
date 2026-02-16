@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:rabacik/data/db_helper.dart';
 import 'package:rabacik/data/models/coupon.dart';
 import 'package:rabacik/screens/add_coupon_screen.dart';
+import 'package:rabacik/screens/coupon_image_screen.dart';
 
 class CouponsListScreen extends StatelessWidget {
   const CouponsListScreen({super.key});
@@ -69,11 +70,20 @@ class _CouponsListBodyState extends State<CouponsListBody> {
               ),
               child: ListTile(
                 leading: (coupon.imagePath != null && coupon.imagePath!.isNotEmpty && File(coupon.imagePath!).existsSync())
-                    ? Image.file(
-                        File(coupon.imagePath!),
-                        width: 48,
-                        height: 48,
-                        fit: BoxFit.cover,
+                    ? GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => CouponImageScreen(imagePath: coupon.imagePath!),
+                            ),
+                          );
+                        },
+                        child: Image.file(
+                          File(coupon.imagePath!),
+                          width: 48,
+                          height: 48,
+                          fit: BoxFit.cover,
+                        ),
                       )
                     : null,
                 title: Row(
