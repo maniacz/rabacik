@@ -85,7 +85,21 @@ class _CouponsListBodyState extends State<CouponsListBody> {
                           fit: BoxFit.cover,
                         ),
                       )
-                    : null,
+                    : Container(
+                        width: 48,
+                        height: 48,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey, width: 2),
+                          borderRadius: BorderRadius.circular(4),
+                          color: Colors.white,
+                        ),
+                        child: Icon(
+                          Icons.no_photography,
+                          size: 32,
+                          color: Colors.grey,
+                        ),
+                      ),
                 title: Row(
                   children: [
                     Text(coupon.code),
