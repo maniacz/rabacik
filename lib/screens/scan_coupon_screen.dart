@@ -47,10 +47,47 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
     final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
     final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
     await textRecognizer.close();
+    final lines = recognizedText.blocks.expand((b) => b.lines).toList();
     setState(() {
-      _recognizedLines = recognizedText.blocks.expand((b) => b.lines).toList();
+      _recognizedLines = lines;
       _isLoading = false;
     });
+    if (lines.isEmpty) {
+      // Show dialog if no text recognized
+      if (mounted) {
+        final result = await showDialog<String>(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            title: const Text('Nie rozpoznano tekstu'),
+            content: const Text('Nie rozpoznałem żadnego tekstu na zdjęciu, spróbuj zrobić nowe zdjęcie albo wprowadź dane kuponu ręcznie'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop('photo');
+                },
+                child: const Text('Zrób zdjęcie'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop('manual');
+                },
+                child: const Text('Wprowadź ręcznie'),
+              ),
+            ],
+          ),
+        );
+        if (result == 'photo') {
+          _pickImage(fromGallery: false);
+        } else if (result == 'manual') {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => AddCouponScreen(),
+            ),
+          );
+        }
+      }
+    }
   }
 
   @override
