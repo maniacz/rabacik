@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:rabacik/data/models/coupon.dart';
 import 'package:rabacik/screens/add_coupon_screen.dart'; // Import AddCouponScreen
 import 'package:path_provider/path_provider.dart';
+import 'package:image/image.dart' as img;
 
 class ScanCouponScreen extends StatefulWidget {
   final File imageFile;
@@ -20,12 +21,14 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
   List<TextLine> _recognizedLines = [];
   bool _isLoading = false;
   Map<int, String> _selectedTypes = {};
+  int _rotationTurns = 0;
   @override
   void initState() {
     super.initState();
     _image = widget.imageFile;
     _recognizedLines = [];
     _recognizeText(_image);
+    _rotationTurns = 0;
   }
 
   Future<void> _pickImage({bool fromGallery = false}) async {
@@ -37,9 +40,33 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
       setState(() {
         _image = File(pickedFile.path);
         _recognizedLines = [];
+        _rotationTurns = 0;
       });
       await _recognizeText(_image!);
     }
+  }
+
+  Future<void> _rotateImage() async {
+    setState(() {
+      _isLoading = true;
+    });
+    final bytes = await _image.readAsBytes();
+    final original = img.decodeImage(bytes);
+    if (original == null) {
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+    final rotated = img.copyRotate(original, angle: 90);
+    final rotatedBytes = img.encodeJpg(rotated);
+    final tempDir = await getTemporaryDirectory();
+    final rotatedFile = await File('${tempDir.path}/rotated_${DateTime.now().millisecondsSinceEpoch}.jpg').writeAsBytes(rotatedBytes);
+    setState(() {
+      _image = rotatedFile;
+      _rotationTurns = (_rotationTurns + 1) % 4;
+    });
+    await _recognizeText(_image);
   }
 
   Future<void> _recognizeText(File image) async {
@@ -100,6 +127,17 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
         child: Column(
           children: [
             const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: _rotateImage,
+                  icon: const Icon(Icons.rotate_right),
+                  label: const Text('Obróć 90°'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
             if (_image != null)
               Expanded(
                 child: FutureBuilder<Size>(
