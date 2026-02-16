@@ -7,6 +7,7 @@ import '../route_logger.dart';
 import '../main.dart';
 import 'package:rabacik/data/logger/local_logger.dart';
 import 'package:rabacik/data/logger/logger.dart';
+import 'dart:io';
 
 class AddCouponScreen extends StatefulWidget {
   final Coupon? coupon;
@@ -76,8 +77,17 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
         padding: const EdgeInsets.all(25.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          // spacing: 20, // spacing is not a property of Column
           children: [
+            if (widget.coupon?.imagePath != null && widget.coupon!.imagePath!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 20.0),
+                child: Image.file(
+                  File(widget.coupon!.imagePath!),
+                  width: 200,
+                  height: 200,
+                  fit: BoxFit.cover,
+                ),
+              ),
             TextField(
               controller: _couponCodeController,
               decoration: InputDecoration(
@@ -242,6 +252,7 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                       issuer: _couponIssuer ?? '',
                       discount: _discount ?? 0,
                       expiryDate: _selectedDate,
+                      imagePath: widget.coupon?.imagePath,
                     );
                     if (!widget.isEditMode) {
                       // Add new coupon

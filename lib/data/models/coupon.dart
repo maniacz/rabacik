@@ -3,6 +3,7 @@ class Coupon {
   final String issuer;
   final int discount;
   final DateTime? expiryDate;
+  final String? imagePath;
   int? id;
 
   Coupon({
@@ -11,13 +12,15 @@ class Coupon {
     required this.issuer,
     required this.discount,
     this.expiryDate,
+    this.imagePath,
   });
 
   Coupon.fromJSON(Map<String, dynamic> map)
       : code = map['code'] ?? '',
         issuer = map['issuer'] ?? '',
         discount = map['discount'] ?? 0,
-        expiryDate = map['expiryDate'] != null ? DateTime.tryParse(map['expiryDate']) : null;
+        expiryDate = map['expiryDate'] != null ? DateTime.tryParse(map['expiryDate']) : null,
+        imagePath = map['imagePath'];
 
   bool isValid() {
     if (expiryDate == null) 
@@ -42,6 +45,7 @@ class Coupon {
       'discount': discount,
       'expiryDate': expiryDate?.toIso8601String(),
       'issuer': issuer,
+      'imagePath': imagePath,
     };
   }
 }

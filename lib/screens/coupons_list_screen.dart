@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:rabacik/data/db_helper.dart';
 import 'package:rabacik/data/models/coupon.dart';
 import 'package:rabacik/screens/add_coupon_screen.dart';
@@ -67,6 +68,14 @@ class _CouponsListBodyState extends State<CouponsListBody> {
                 child: const Icon(Icons.delete, color: Colors.white),
               ),
               child: ListTile(
+                leading: (coupon.imagePath != null && coupon.imagePath!.isNotEmpty && File(coupon.imagePath!).existsSync())
+                    ? Image.file(
+                        File(coupon.imagePath!),
+                        width: 48,
+                        height: 48,
+                        fit: BoxFit.cover,
+                      )
+                    : null,
                 title: Row(
                   children: [
                     Text(coupon.code),

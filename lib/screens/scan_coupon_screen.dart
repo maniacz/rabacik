@@ -5,6 +5,7 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import 'package:image_picker/image_picker.dart';
 import 'package:rabacik/data/models/coupon.dart';
 import 'package:rabacik/screens/add_coupon_screen.dart'; // Import AddCouponScreen
+import 'package:path_provider/path_provider.dart';
 
 class ScanCouponScreen extends StatefulWidget {
   final File imageFile;
@@ -187,7 +188,7 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
             if (_recognizedLines.isNotEmpty) ...[
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   String code = '';
                   String issuer = '';
                   String discount = '';
@@ -212,6 +213,22 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
                   } catch (_) {
                     expiryDate = null;
                   }
+
+                  // Zapisz zdjęcie do katalogu images i przekaż ścieżkę
+                  String? imagePath;
+                  try {
+                    final appDir = await getApplicationDocumentsDirectory();
+                    final imagesDir = Directory('${appDir.path}/images');
+                    if (!await imagesDir.exists()) {
+                      await imagesDir.create(recursive: true);
+                    }
+                    final fileName = 'coupon_${DateTime.now().millisecondsSinceEpoch}.jpg';
+                    final savedImage = await _image.copy('${imagesDir.path}/$fileName');
+                    imagePath = savedImage.path;
+                  } catch (e) {
+                    imagePath = null;
+                  }
+
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => AddCouponScreen(
@@ -220,6 +237,7 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
                           issuer: issuer,
                           discount: discountInt,
                           expiryDate: expiryDate,
+                          imagePath: imagePath,
                         ),
                       ),
                     ),
