@@ -22,6 +22,7 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
   bool _isLoading = false;
   Map<int, String> _selectedTypes = {};
   int _rotationTurns = 0;
+  DateTime? _recognizedExpiryDate;
   @override
   void initState() {
     super.initState();
@@ -29,6 +30,7 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
     _recognizedLines = [];
     _recognizeText(_image);
     _rotationTurns = 0;
+    _recognizedExpiryDate = null;
   }
 
   Future<void> _pickImage({bool fromGallery = false}) async {
@@ -114,6 +116,98 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
             ),
           );
         }
+      }
+      return;
+    }
+
+    // --- WYKRYWANIE DAT ---
+    final dateRegExp = RegExp(r'(\d{4}[-/.]\d{2}[-/.]\d{2}|\d{2}[-/.]\d{2}[-/.]\d{4})');
+    final foundDates = <String>[];
+    for (final line in lines) {
+      final matches = dateRegExp.allMatches(line.text);
+      for (final match in matches) {
+        foundDates.add(match.group(0)!);
+      }
+    }
+    if (foundDates.isNotEmpty && mounted) {
+      if (foundDates.length == 1) {
+        // Jedna data - zapytaj czy to data ważności
+        final confirm = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Potwierdź datę ważności'),
+            content: Text('Wykryto datę: ${foundDates.first}\nCzy to data ważności kuponu?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Nie'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Tak'),
+              ),
+            ],
+          ),
+        );
+        if (confirm == true) {
+          // Oznacz tę datę jako expiry
+          final idx = lines.indexWhere((l) => l.text.contains(foundDates.first));
+          if (idx != -1) {
+            setState(() {
+              _selectedTypes[idx] = 'expiry';
+              _recognizedExpiryDate = _parseDate(foundDates.first);
+            });
+          }
+        }
+      } else if (foundDates.length > 1) {
+        // Wiele dat - wybierz z listy
+        String? selectedDate = foundDates.first;
+        await showDialog<void>(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('Wybierz datę ważności'),
+              content: StatefulBuilder(
+                builder: (context, setStateDialog) {
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: foundDates.map((date) => RadioListTile<String>(
+                      title: Text(date),
+                      value: date,
+                      groupValue: selectedDate,
+                      onChanged: (val) {
+                        setStateDialog(() {
+                          selectedDate = val;
+                        });
+                      },
+                    )).toList(),
+                  );
+                },
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Anuluj'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    if (selectedDate != null) {
+                      final idx = lines.indexWhere((l) => l.text.contains(selectedDate!));
+                      if (idx != -1) {
+                        setState(() {
+                          _selectedTypes[idx] = 'expiry';
+                          _recognizedExpiryDate = _parseDate(selectedDate!);
+                        });
+                      }
+                    }
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Wybierz'),
+                ),
+              ],
+            );
+          },
+        );
       }
     }
   }
@@ -241,13 +335,19 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
                       final cleaned = lineText.replaceAll(RegExp(r'[-%\\s]'), '');
                       discount = int.tryParse(cleaned)?.toString() ?? '';
                     } else if (type == 'expiry') {
-                      expiry = lineText;
+                      if (_recognizedExpiryDate == null) {
+                        expiry = lineText;
+                      }
                     }
                   });
                   int discountInt = int.tryParse(discount) ?? 0;
                   DateTime? expiryDate;
                   try {
-                    expiryDate = DateTime.tryParse(expiry);
+                    if (_recognizedExpiryDate != null) {
+                      expiryDate = _recognizedExpiryDate;
+                    } else {
+                      expiryDate = DateTime.tryParse(expiry);
+                    }
                   } catch (_) {
                     expiryDate = null;
                   }
@@ -317,6 +417,25 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
     final dx = (displaySize.width - imageSize.width * scale) / 2;
     final dy = (displaySize.height - imageSize.height * scale) / 2;
     return Offset(dx, dy);
+  }
+
+  DateTime? _parseDate(String input) {
+    // yyyy-MM-dd, yyyy/MM/dd, yyyy.MM.dd
+    final isoMatch = RegExp(r'^(\d{4})[-/.](\d{2})[-/.](\d{2})$').firstMatch(input);
+    if (isoMatch != null) {
+      return DateTime.tryParse('${isoMatch.group(1)}-${isoMatch.group(2)}-${isoMatch.group(3)}');
+    }
+    // dd-MM-yyyy, dd/MM/yyyy, dd.MM.yyyy
+    final euroMatch = RegExp(r'^(\d{2})[-/.](\d{2})[-/.](\d{4})$').firstMatch(input);
+    if (euroMatch != null) {
+      final day = int.tryParse(euroMatch.group(1)!);
+      final month = int.tryParse(euroMatch.group(2)!);
+      final year = int.tryParse(euroMatch.group(3)!);
+      if (day != null && month != null && year != null) {
+        return DateTime(year, month, day);
+      }
+    }
+    return null;
   }
 }
 
