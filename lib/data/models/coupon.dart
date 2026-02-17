@@ -3,6 +3,7 @@ class Coupon {
   final String issuer;
   final int discount;
   final DateTime? expiryDate;
+  final DateTime? validFromDate;
   final String? imagePath;
   int? id;
 
@@ -12,6 +13,7 @@ class Coupon {
     required this.issuer,
     required this.discount,
     this.expiryDate,
+    this.validFromDate,
     this.imagePath,
   });
 
@@ -20,6 +22,7 @@ class Coupon {
         issuer = map['issuer'] ?? '',
         discount = map['discount'] ?? 0,
         expiryDate = map['expiryDate'] != null ? DateTime.tryParse(map['expiryDate']) : null,
+        validFromDate = map['validFromDate'] != null ? DateTime.tryParse(map['validFromDate']) : null,
         imagePath = map['imagePath'];
 
   bool isValid() {
@@ -44,6 +47,7 @@ class Coupon {
       'code': code,
       'discount': discount,
       'expiryDate': expiryDate?.toIso8601String(),
+      'validFromDate': validFromDate?.toIso8601String(),
       'issuer': issuer,
       'imagePath': imagePath,
     };
