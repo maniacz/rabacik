@@ -167,11 +167,12 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                   const SizedBox(width: 4),
                   ElevatedButton(
                     onPressed: () async {
+                      final DateTime lastDate = _selectedExpiryDate ?? DateTime(2101, 12, 31);
                       final DateTime? picked = await showDatePicker(
                         context: context,
-                        initialDate: _selectedValidFromDate ?? DateTime.now(),
+                        initialDate: _selectedValidFromDate ?? (DateTime.now().isAfter(lastDate) ? lastDate : DateTime.now()),
                         firstDate: DateTime(2000),
-                        lastDate: DateTime(2101),
+                        lastDate: lastDate,
                       );
                       if (picked != null) {
                         setState(() {
@@ -190,10 +191,11 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                   const SizedBox(width: 4),
                   ElevatedButton(
                     onPressed: () async {
+                      final DateTime firstDate = _selectedValidFromDate ?? DateTime(2000);
                       final DateTime? picked = await showDatePicker(
                         context: context,
-                        initialDate: _selectedExpiryDate ?? DateTime.now(),
-                        firstDate: DateTime(2000),
+                        initialDate: _selectedExpiryDate ?? (DateTime.now().isBefore(firstDate) ? firstDate : DateTime.now()),
+                        firstDate: firstDate,
                         lastDate: DateTime(2101),
                       );
                       if (picked != null) {
