@@ -28,7 +28,8 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
     routeObserver.subscribe(_routeAware, ModalRoute.of(context)! as PageRoute);
   }
 
-  DateTime? _selectedDate;
+  DateTime? _selectedExpiryDate;
+  DateTime? _selectedValidFromDate;
   String? _couponCode;
   String? _couponIssuer;
   int? _discount;
@@ -46,7 +47,8 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
     if (widget.coupon != null) {
       _couponCode = widget.coupon!.code;
       _couponIssuer = widget.coupon!.issuer;
-      _selectedDate = widget.coupon!.expiryDate;
+      _selectedExpiryDate = widget.coupon!.expiryDate;
+      _selectedValidFromDate = widget.coupon!.validFromDate;
       _discount = widget.coupon!.discount;
     }
     _couponCodeController = TextEditingController(text: _couponCode ?? '');
@@ -156,31 +158,58 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
               },
             ),
             const SizedBox(height: 20),
-            Row(
-              children: [
-                const Text('Ważny do: '),
-                ElevatedButton(
-                  onPressed: () async {
-                    final DateTime? picked = await showDatePicker(
-                      context: context,
-                      initialDate: _selectedDate ?? DateTime.now(),
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2101),
-                    );
-                    if (picked != null && picked != _selectedDate) {
-                      setState(() {
-                        _selectedDate = picked;
-                      });
-                    }
-                  },
-                  child: const Text('Wybierz datę'),
-                ),
-                Text(
-                  _selectedDate == null
-                      ? 'Nie wybrano daty'
-                      : '\t${_selectedDate!.day}-${_selectedDate!.month}-${_selectedDate!.year}',
-                ),
-              ],
+            Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Text('Ważny od:'),
+                  const SizedBox(width: 4),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final DateTime? picked = await showDatePicker(
+                        context: context,
+                        initialDate: _selectedValidFromDate ?? DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2101),
+                      );
+                      if (picked != null) {
+                        setState(() {
+                          _selectedValidFromDate = picked;
+                        });
+                      }
+                    },
+                    child: Text(
+                      _selectedValidFromDate == null
+                          ? 'Wybierz datę'
+                          : '${_selectedValidFromDate!.day}-${_selectedValidFromDate!.month}-${_selectedValidFromDate!.year}',
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Text('do:'),
+                  const SizedBox(width: 4),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final DateTime? picked = await showDatePicker(
+                        context: context,
+                        initialDate: _selectedExpiryDate ?? DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2101),
+                      );
+                      if (picked != null) {
+                        setState(() {
+                          _selectedExpiryDate = picked;
+                        });
+                      }
+                    },
+                    child: Text(
+                      _selectedExpiryDate == null
+                          ? 'Wybierz datę'
+                          : '${_selectedExpiryDate!.day}-${_selectedExpiryDate!.month}-${_selectedExpiryDate!.year}',
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 20),
             Row(
@@ -220,7 +249,7 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                       return;
                     }
                     // If expiry date is not selected, show confirmation dialog
-                    if (_selectedDate == null) {
+                    if (_selectedExpiryDate == null) {
                       final shouldSave = await showDialog<bool>(
                         context: context,
                         builder: (context) => AlertDialog(
@@ -251,7 +280,8 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                       code: _couponCode ?? '',
                       issuer: _couponIssuer ?? '',
                       discount: _discount ?? 0,
-                      expiryDate: _selectedDate,
+                      expiryDate: _selectedExpiryDate,
+                      validFromDate: _selectedValidFromDate,
                       imagePath: widget.coupon?.imagePath,
                     );
                     if (!widget.isEditMode) {
