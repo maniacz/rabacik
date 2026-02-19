@@ -1,3 +1,5 @@
+import 'dart:isolate';
+
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:rabacik/data/db_helper.dart';
@@ -124,12 +126,12 @@ class _CouponsListBodyState extends State<CouponsListBody> {
                 trailing: IconButton(
                   icon: const Icon(Icons.edit),
                   onPressed: () async {
-                    final updatedCouponId = await Navigator.of(context).push(
+                    final isCouponEdited = await Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) => AddCouponScreen(coupon: coupon, isEditMode: true),
                       ),
                     );
-                    if (updatedCouponId != null) {
+                    if (isCouponEdited) {
                       await _refreshCoupons();
                     }
                   },

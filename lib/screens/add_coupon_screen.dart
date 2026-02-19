@@ -332,7 +332,7 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                         if (isUpdateSuccessful) {
                           Navigator.of(
                             context,
-                          ).pop();
+                          ).pop(true); // Return true to indicate update
                         } else {
                           _logger.log('Błąd podczas aktualizacji kuponu', error: 'updateCoupon zwrócił false');
                         }
