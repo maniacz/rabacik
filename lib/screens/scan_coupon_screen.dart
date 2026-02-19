@@ -23,6 +23,7 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
   Map<int, String> _selectedTypes = {};
   int _rotationTurns = 0;
   DateTime? _recognizedExpiryDate;
+  DateTime? _selectedValidFromDate;
   @override
   void initState() {
     super.initState();
@@ -159,27 +160,172 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
             });
           }
         }
-      } else if (foundDates.length > 1) {
-        // Wiele dat - wybierz z listy
-        String? selectedDate = foundDates.first;
+      } else if (foundDates.length == 2) {
+        // Automatyczna sugestia: wcześniejsza data = validFrom, późniejsza = expiry
+        List<String> sortedDates = List.from(foundDates);
+        sortedDates.sort((a, b) {
+          DateTime? da = _parseDate(a);
+          DateTime? db = _parseDate(b);
+          if (da == null || db == null) return 0;
+          return da.compareTo(db);
+        });
+        final validFrom = sortedDates[0];
+        final expiry = sortedDates[1];
+        final confirm = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Wykryto dwie daty'),
+            content: Text('Wykryto dwie daty:\n- $validFrom (ważny od)\n- $expiry (ważny do)\nCzy przypisać je automatycznie?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Nie'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Tak'),
+              ),
+            ],
+          ),
+        );
+        if (confirm == true) {
+          setState(() {
+            final idxFrom = lines.indexWhere((l) => l.text.contains(validFrom));
+            final idxTo = lines.indexWhere((l) => l.text.contains(expiry));
+            if (idxFrom != -1) _selectedTypes[idxFrom] = 'validFrom';
+            if (idxTo != -1) _selectedTypes[idxTo] = 'expiry';
+            _selectedValidFromDate = _parseDate(validFrom);
+            _recognizedExpiryDate = _parseDate(expiry);
+          });
+        } else {
+          // Jeśli użytkownik nie potwierdzi, pokaż standardowy dialog wyboru ról
+          Map<String, String> dateRoles = { for (var d in foundDates) d: '' };
+          await showDialog<void>(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                title: const Text('Przypisz rolę każdej dacie'),
+                content: StatefulBuilder(
+                  builder: (context, setStateDialog) {
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: foundDates.map((date) => Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(date),
+                          Row(
+                            children: [
+                              Radio<String>(
+                                value: 'validFrom',
+                                groupValue: dateRoles[date],
+                                onChanged: (val) {
+                                  setStateDialog(() {
+                                    if (!dateRoles.containsValue('validFrom') || dateRoles[date] == 'validFrom') {
+                                      dateRoles[date] = val!;
+                                    }
+                                  });
+                                },
+                              ),
+                              const Text('ważny od'),
+                              Radio<String>(
+                                value: 'expiry',
+                                groupValue: dateRoles[date],
+                                onChanged: (val) {
+                                  setStateDialog(() {
+                                    if (!dateRoles.containsValue('expiry') || dateRoles[date] == 'expiry') {
+                                      dateRoles[date] = val!;
+                                    }
+                                  });
+                                },
+                              ),
+                              const Text('ważny do'),
+                            ],
+                          ),
+                        ],
+                      )).toList(),
+                    );
+                  },
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Anuluj'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      String? validFrom;
+                      String? expiry;
+                      dateRoles.forEach((date, role) {
+                        if (role == 'validFrom') validFrom = date;
+                        if (role == 'expiry') expiry = date;
+                      });
+                      setState(() {
+                        if (validFrom != null) {
+                          final idx = lines.indexWhere((l) => l.text.contains(validFrom!));
+                          if (idx != -1) _selectedTypes[idx] = 'validFrom';
+                          _selectedValidFromDate = _parseDate(validFrom!);
+                        }
+                        if (expiry != null) {
+                          final idx = lines.indexWhere((l) => l.text.contains(expiry!));
+                          if (idx != -1) _selectedTypes[idx] = 'expiry';
+                          _recognizedExpiryDate = _parseDate(expiry!);
+                        }
+                      });
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('Zatwierdź'),
+                  ),
+                ],
+              );
+            },
+          );
+        }
+      } else if (foundDates.length > 2) {
+        // Wiele dat - przypisz role (od/do) każdej dacie
+        Map<String, String> dateRoles = { for (var d in foundDates) d: '' };
         await showDialog<void>(
           context: context,
           builder: (context) {
             return AlertDialog(
-              title: const Text('Wybierz datę ważności'),
+              title: const Text('Przypisz rolę każdej dacie'),
               content: StatefulBuilder(
                 builder: (context, setStateDialog) {
                   return Column(
                     mainAxisSize: MainAxisSize.min,
-                    children: foundDates.map((date) => RadioListTile<String>(
-                      title: Text(date),
-                      value: date,
-                      groupValue: selectedDate,
-                      onChanged: (val) {
-                        setStateDialog(() {
-                          selectedDate = val;
-                        });
-                      },
+                    children: foundDates.map((date) => Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(date),
+                        Row(
+                          children: [
+                            Radio<String>(
+                              value: 'validFrom',
+                              groupValue: dateRoles[date],
+                              onChanged: (val) {
+                                setStateDialog(() {
+                                  // Zapobiegaj przypisaniu tej samej roli do wielu dat
+                                  if (!dateRoles.containsValue('validFrom') || dateRoles[date] == 'validFrom') {
+                                    dateRoles[date] = val!;
+                                  }
+                                });
+                              },
+                            ),
+                            const Text('ważny od'),
+                            Radio<String>(
+                              value: 'expiry',
+                              groupValue: dateRoles[date],
+                              onChanged: (val) {
+                                setStateDialog(() {
+                                  if (!dateRoles.containsValue('expiry') || dateRoles[date] == 'expiry') {
+                                    dateRoles[date] = val!;
+                                  }
+                                });
+                              },
+                            ),
+                            const Text('ważny do'),
+                          ],
+                        ),
+                      ],
                     )).toList(),
                   );
                 },
@@ -191,18 +337,28 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
                 ),
                 TextButton(
                   onPressed: () {
-                    if (selectedDate != null) {
-                      final idx = lines.indexWhere((l) => l.text.contains(selectedDate!));
-                      if (idx != -1) {
-                        setState(() {
-                          _selectedTypes[idx] = 'expiry';
-                          _recognizedExpiryDate = _parseDate(selectedDate!);
-                        });
+                    // Przypisz daty do pól
+                    String? validFrom;
+                    String? expiry;
+                    dateRoles.forEach((date, role) {
+                      if (role == 'validFrom') validFrom = date;
+                      if (role == 'expiry') expiry = date;
+                    });
+                    setState(() {
+                      if (validFrom != null) {
+                        final idx = lines.indexWhere((l) => l.text.contains(validFrom!));
+                        if (idx != -1) _selectedTypes[idx] = 'validFrom';
+                        _selectedValidFromDate = _parseDate(validFrom!);
                       }
-                    }
+                      if (expiry != null) {
+                        final idx = lines.indexWhere((l) => l.text.contains(expiry!));
+                        if (idx != -1) _selectedTypes[idx] = 'expiry';
+                        _recognizedExpiryDate = _parseDate(expiry!);
+                      }
+                    });
                     Navigator.of(context).pop();
                   },
-                  child: const Text('Wybierz'),
+                  child: const Text('Zatwierdź'),
                 ),
               ],
             );
@@ -375,6 +531,7 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
                           issuer: issuer,
                           discount: discountInt,
                           expiryDate: expiryDate,
+                          validFromDate: _selectedValidFromDate,
                           imagePath: imagePath,
                         ),
                       ),
