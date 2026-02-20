@@ -122,12 +122,15 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
     }
 
     // --- WYKRYWANIE DAT ---
-    final dateRegExp = RegExp(r'(\d{4}[-/.]\d{2}[-/.]\d{2}|\d{2}[-/.]\d{2}[-/.]\d{4})');
+    final dateRegExp = RegExp(r'(\d{4}[-/.][\dO]{2}[-/.]\d{2}|\d{2}[-/.][\dO]{2}[-/.]\d{4})');
     final foundDates = <String>[];
     for (final line in lines) {
       final matches = dateRegExp.allMatches(line.text);
       for (final match in matches) {
-        foundDates.add(match.group(0)!);
+        // Zamień 'O' na '0' w wykrytej dacie
+        final rawDate = match.group(0)!;
+        final normalizedDate = rawDate.replaceAll('O', '0');
+        foundDates.add(normalizedDate);
       }
     }
     if (foundDates.isNotEmpty && mounted) {
@@ -152,13 +155,10 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
         );
         if (confirm == true) {
           // Oznacz tę datę jako expiry
-          final idx = lines.indexWhere((l) => l.text.contains(foundDates.first));
-          if (idx != -1) {
-            setState(() {
-              _selectedTypes[idx] = 'expiry';
-              _recognizedExpiryDate = _parseDate(foundDates.first);
-            });
-          }
+          var expiryDate = _parseDate(foundDates.first);
+          setState(() {
+            _recognizedExpiryDate = expiryDate;
+          });
         }
       } else if (foundDates.length == 2) {
         // Automatyczna sugestia: wcześniejsza data = validFrom, późniejsza = expiry
