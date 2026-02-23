@@ -122,7 +122,7 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
     }
 
     // --- WYKRYWANIE DAT ---
-    final dateRegExp = RegExp(r'(\d{4}[-/.][\dO]{2}[-/.]\d{2}|\d{2}[-/.][\dO]{2}[-/.]\d{4}|\d{2}[-/.][\dO]{2})');
+    final dateRegExp = RegExp(r'(?<!\d)(?:20\d{2}[-.](?:0\d|1[0-2]|O\d)[-.](?:0\d|[12]\d|3[01])|(?:0?\d|[12]\d|3[01])[-.](?:0\d|1[0-2]|O\d)[-.]20\d{2}|(?:0?\d|[12]\d|3[01])[-.](?:0\d|1[0-2]|O\d))(?!\d)');
     final foundDates = <String>[];
     final foundDateTimes = <DateTime>[];
     for (final line in lines) {
