@@ -122,15 +122,29 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
     }
 
     // --- WYKRYWANIE DAT ---
-    final dateRegExp = RegExp(r'(\d{4}[-/.][\dO]{2}[-/.]\d{2}|\d{2}[-/.][\dO]{2}[-/.]\d{4})');
+    final dateRegExp = RegExp(r'(\d{4}[-/.][\dO]{2}[-/.]\d{2}|\d{2}[-/.][\dO]{2}[-/.]\d{4}|\d{2}[-/.][\dO]{2})');
     final foundDates = <String>[];
+    final foundDateTimes = <DateTime>[];
     for (final line in lines) {
       final matches = dateRegExp.allMatches(line.text);
       for (final match in matches) {
         // Zamień 'O' na '0' w wykrytej dacie
         final rawDate = match.group(0)!;
         final normalizedDate = rawDate.replaceAll('O', '0');
-        foundDates.add(normalizedDate);
+        final parsedDate = _parseDate(normalizedDate);
+        if (parsedDate != null) {
+          // Sprawdź, czy już istnieje taka data (ignorując format)
+          final isDuplicate = foundDateTimes.any((dt) => dt.year == parsedDate.year && dt.month == parsedDate.month && dt.day == parsedDate.day);
+          if (!isDuplicate) {
+            foundDates.add(normalizedDate);
+            foundDateTimes.add(parsedDate);
+          }
+        } else {
+          // Jeśli nie parsuje się do DateTime, dodaj jako unikalny tekst
+          if (!foundDates.contains(normalizedDate)) {
+            foundDates.add(normalizedDate);
+          }
+        }
       }
     }
     if (foundDates.isNotEmpty && mounted) {
@@ -590,6 +604,21 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
       final year = int.tryParse(euroMatch.group(3)!);
       if (day != null && month != null && year != null) {
         return DateTime(year, month, day);
+      }
+    }
+    // dd.MM or dd-MM or dd/MM (bez roku)
+    final shortMatch = RegExp(r'^(\d{2})[-/.](\d{2})$').firstMatch(input);
+    if (shortMatch != null) {
+      final day = int.tryParse(shortMatch.group(1)!);
+      final month = int.tryParse(shortMatch.group(2)!);
+      if (day != null && month != null) {
+        final now = DateTime.now();
+        // Jeśli data już minęła w tym roku, załóż przyszły rok
+        DateTime candidate = DateTime(now.year, month, day);
+        if (candidate.isBefore(now.subtract(const Duration(days: 1)))) {
+          candidate = DateTime(now.year + 1, month, day);
+        }
+        return candidate;
       }
     }
     return null;
