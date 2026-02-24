@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:rabacik/data/models/coupon.dart';
+import 'package:rabacik/data/models/recognized_date.dart';
 import 'package:rabacik/screens/add_coupon_screen.dart'; // Import AddCouponScreen
 import 'package:path_provider/path_provider.dart';
 import 'package:image/image.dart' as img;
@@ -124,20 +125,24 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
     // --- WYKRYWANIE DAT ---
     final dateRegExp = RegExp(r'(?<!\d)(?:20\d{2}[-.](?:0\d|1[0-2]|O\d)[-.](?:0\d|[12]\d|3[01])|(?:0?\d|[12]\d|3[01])[-.](?:0\d|1[0-2]|O\d)[-.]20\d{2}|(?:0?\d|[12]\d|3[01])[-.](?:0\d|1[0-2]|O\d))(?!\d)');
     final foundDates = <String>[];
-    final foundDateTimes = <DateTime>[];
+    final recognizedDates = <RecognizedDate>[];
     for (final line in lines) {
       final matches = dateRegExp.allMatches(line.text);
       for (final match in matches) {
         // Zamień 'O' na '0' w wykrytej dacie
         final rawDate = match.group(0)!;
         final normalizedDate = rawDate.replaceAll('O', '0');
-        final parsedDate = _parseDate(normalizedDate);
-        if (parsedDate != null) {
+        final recognized = _parseDate(normalizedDate);
+        if (recognized != null) {
           // Sprawdź, czy już istnieje taka data (ignorując format)
-          final isDuplicate = foundDateTimes.any((dt) => dt.year == parsedDate.year && dt.month == parsedDate.month && dt.day == parsedDate.day);
-          if (!isDuplicate) {
-            foundDates.add(normalizedDate);
-            foundDateTimes.add(parsedDate);
+          final duplicateIdx = recognizedDates.indexWhere((dt) => dt.dateTime.month == recognized.dateTime.month && dt.dateTime.day == recognized.dateTime.day);
+          if (duplicateIdx != -1) {
+            final existing = recognizedDates[duplicateIdx];
+            if (existing.isShortFormat && !recognized.isShortFormat) {
+              recognizedDates[duplicateIdx] = recognized;
+            }
+          } else {
+            recognizedDates.add(recognized);
           }
         } else {
           // Jeśli nie parsuje się do DateTime, dodaj jako unikalny tekst
@@ -151,7 +156,7 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
     // Jeśli wykryto daty, zapytaj użytkownika o ich role (ważny od/ważny do) 
     // Jeśli jest tylko jedna data, zapytaj czy to data ważności
     if (foundDates.isNotEmpty && mounted) {
-      if (foundDates.length == 1) {
+      if (recognizedDates.length == 1) {
         // Jedna data - zapytaj czy to data ważności
         final confirm = await showDialog<bool>(
           context: context,
@@ -172,21 +177,15 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
         );
         if (confirm == true) {
           // Oznacz tę datę jako expiry
-          var expiryDate = _parseDate(foundDates.first);
           setState(() {
-            _recognizedExpiryDate = expiryDate;
+            _recognizedExpiryDate = recognizedDates.first.dateTime;
           });
         }
       // Jeśli są dwie daty, zasugeruj automatyczne przypisanie wcześniejszej jako validFrom, a późniejszej jako expiry
       } else if (foundDates.length == 2) {
         // Automatyczna sugestia: wcześniejsza data = validFrom, późniejsza = expiry
-        List<String> sortedDates = List.from(foundDates);
-        sortedDates.sort((a, b) {
-          DateTime? da = _parseDate(a);
-          DateTime? db = _parseDate(b);
-          if (da == null || db == null) return 0;
-          return da.compareTo(db);
-        });
+        List<RecognizedDate> sortedDates = List.from(recognizedDates);
+        sortedDates.sort((a, b) => a.dateTime.compareTo(b.dateTime));
         final validFrom = sortedDates[0];
         final expiry = sortedDates[1];
         final confirm = await showDialog<bool>(
@@ -208,12 +207,12 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
         );
         if (confirm == true) {
           setState(() {
-            final idxFrom = lines.indexWhere((l) => l.text.contains(validFrom));
-            final idxTo = lines.indexWhere((l) => l.text.contains(expiry));
+            final idxFrom = lines.indexWhere((l) => l.text.contains(validFrom.originalText));
+            final idxTo = lines.indexWhere((l) => l.text.contains(expiry.originalText));
             if (idxFrom != -1) _selectedTypes[idxFrom] = 'validFrom';
             if (idxTo != -1) _selectedTypes[idxTo] = 'expiry';
-            _selectedValidFromDate = _parseDate(validFrom);
-            _recognizedExpiryDate = _parseDate(expiry);
+            _selectedValidFromDate = validFrom.dateTime;
+            _recognizedExpiryDate = expiry.dateTime;
           });
         } else {
           // Jeśli użytkownik nie potwierdzi, pokaż standardowy dialog wyboru ról
@@ -279,14 +278,16 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
                       });
                       setState(() {
                         if (validFrom != null) {
+                          final recognized = _parseDate(validFrom!);
                           final idx = lines.indexWhere((l) => l.text.contains(validFrom!));
                           if (idx != -1) _selectedTypes[idx] = 'validFrom';
-                          _selectedValidFromDate = _parseDate(validFrom!);
+                          _selectedValidFromDate = recognized?.dateTime;
                         }
                         if (expiry != null) {
+                          final recognized = _parseDate(expiry!);
                           final idx = lines.indexWhere((l) => l.text.contains(expiry!));
                           if (idx != -1) _selectedTypes[idx] = 'expiry';
-                          _recognizedExpiryDate = _parseDate(expiry!);
+                          _recognizedExpiryDate = recognized?.dateTime;
                         }
                       });
                       Navigator.of(context).pop();
@@ -365,14 +366,16 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
                     });
                     setState(() {
                       if (validFrom != null) {
+                        final recognized = _parseDate(validFrom!);
                         final idx = lines.indexWhere((l) => l.text.contains(validFrom!));
                         if (idx != -1) _selectedTypes[idx] = 'validFrom';
-                        _selectedValidFromDate = _parseDate(validFrom!);
+                        _selectedValidFromDate = recognized?.dateTime;
                       }
                       if (expiry != null) {
+                        final recognized = _parseDate(expiry!);
                         final idx = lines.indexWhere((l) => l.text.contains(expiry!));
                         if (idx != -1) _selectedTypes[idx] = 'expiry';
-                        _recognizedExpiryDate = _parseDate(expiry!);
+                        _recognizedExpiryDate = recognized?.dateTime;
                       }
                     });
                     Navigator.of(context).pop();
@@ -595,11 +598,20 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
     return Offset(dx, dy);
   }
 
-  DateTime? _parseDate(String input) {
+  RecognizedDate? _parseDate(String input) {
     // yyyy-MM-dd, yyyy/MM/dd, yyyy.MM.dd
     final isoMatch = RegExp(r'^(\d{4})[-/.](\d{2})[-/.](\d{2})$').firstMatch(input);
     if (isoMatch != null) {
-      return DateTime.tryParse('${isoMatch.group(1)}-${isoMatch.group(2)}-${isoMatch.group(3)}');
+      final dt = DateTime.tryParse('${isoMatch.group(1)}-${isoMatch.group(2)}-${isoMatch.group(3)}');
+      if (dt != null) {
+        return RecognizedDate(
+          originalText: input,
+          dateTime: dt,
+          isShortFormat: false,
+        );
+      } else {
+        return null;
+      }
     }
     // dd-MM-yyyy, dd/MM/yyyy, dd.MM.yyyy
     final euroMatch = RegExp(r'^(\d{2})[-/.](\d{2})[-/.](\d{4})$').firstMatch(input);
@@ -608,7 +620,11 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
       final month = int.tryParse(euroMatch.group(2)!);
       final year = int.tryParse(euroMatch.group(3)!);
       if (day != null && month != null && year != null) {
-        return DateTime(year, month, day);
+        return RecognizedDate(
+          originalText: input,
+          dateTime: DateTime(year, month, day),
+          isShortFormat: false,
+        );
       }
     }
     // dd.MM or dd-MM or dd/MM (bez roku)
@@ -623,7 +639,11 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
         if (candidate.isBefore(now.subtract(const Duration(days: 1)))) {
           candidate = DateTime(now.year + 1, month, day);
         }
-        return candidate;
+        return RecognizedDate(
+          originalText: input,
+          dateTime: candidate,
+          isShortFormat: true,
+        );
       }
     }
     return null;
