@@ -147,6 +147,9 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
         }
       }
     }
+
+    // Jeśli wykryto daty, zapytaj użytkownika o ich role (ważny od/ważny do) 
+    // Jeśli jest tylko jedna data, zapytaj czy to data ważności
     if (foundDates.isNotEmpty && mounted) {
       if (foundDates.length == 1) {
         // Jedna data - zapytaj czy to data ważności
@@ -174,6 +177,7 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
             _recognizedExpiryDate = expiryDate;
           });
         }
+      // Jeśli są dwie daty, zasugeruj automatyczne przypisanie wcześniejszej jako validFrom, a późniejszej jako expiry
       } else if (foundDates.length == 2) {
         // Automatyczna sugestia: wcześniejsza data = validFrom, późniejsza = expiry
         List<String> sortedDates = List.from(foundDates);
@@ -294,6 +298,7 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
             },
           );
         }
+      // Jeśli jest więcej niż 2 daty, pokaż dialog do przypisania ról każdej dacie
       } else if (foundDates.length > 2) {
         // Wiele dat - przypisz role (od/do) każdej dacie
         Map<String, String> dateRoles = { for (var d in foundDates) d: '' };
