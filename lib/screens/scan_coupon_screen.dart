@@ -162,7 +162,7 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Potwierdź datę ważności'),
-            content: Text('Wykryto datę: ${recognizedDates.first.originalText}\nCzy to data ważności kuponu?'),
+            content: Text('Wykryto datę: ${formatDate(recognizedDates.first.dateTime)}\nCzy to data ważności kuponu?'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
@@ -192,7 +192,7 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
           context: context,
             builder: (context) => AlertDialog(
               title: const Text('Wykryto dwie daty'),
-              content: Text('Wykryto dwie daty:\n- ${validFrom.dateTime} (ważny od)\n- ${expiry.dateTime} (ważny do)\nCzy przypisać je automatycznie?'),
+              content: Text('Wykryto dwie daty:\n- ${formatDate(validFrom.dateTime)} (ważny od)\n- ${formatDate(expiry.dateTime)} (ważny do)\nCzy przypisać je automatycznie?'),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(false),
@@ -226,7 +226,7 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
                       children: recognizedDates.map((date) => Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                            Text(date.dateTime.toString()),
+                            Text(formatDate(date.dateTime)),
                           Row(
                             children: [
                               Radio<String>(
@@ -638,6 +638,10 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
       }
     }
     return null;
+  }
+
+  String formatDate(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}';
   }
 }
 
