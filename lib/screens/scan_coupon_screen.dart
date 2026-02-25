@@ -155,14 +155,14 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
 
     // Jeśli wykryto daty, zapytaj użytkownika o ich role (ważny od/ważny do) 
     // Jeśli jest tylko jedna data, zapytaj czy to data ważności
-    if (foundDates.isNotEmpty && mounted) {
+    if (recognizedDates.isNotEmpty && mounted) {
       if (recognizedDates.length == 1) {
         // Jedna data - zapytaj czy to data ważności
         final confirm = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Potwierdź datę ważności'),
-            content: Text('Wykryto datę: ${foundDates.first}\nCzy to data ważności kuponu?'),
+            content: Text('Wykryto datę: ${recognizedDates.first.originalText}\nCzy to data ważności kuponu?'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
@@ -182,7 +182,7 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
           });
         }
       // Jeśli są dwie daty, zasugeruj automatyczne przypisanie wcześniejszej jako validFrom, a późniejszej jako expiry
-      } else if (foundDates.length == 2) {
+      } else if (recognizedDates.length == 2) {
         // Automatyczna sugestia: wcześniejsza data = validFrom, późniejsza = expiry
         List<RecognizedDate> sortedDates = List.from(recognizedDates);
         sortedDates.sort((a, b) => a.dateTime.compareTo(b.dateTime));
@@ -190,33 +190,30 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
         final expiry = sortedDates[1];
         final confirm = await showDialog<bool>(
           context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Wykryto dwie daty'),
-            content: Text('Wykryto dwie daty:\n- $validFrom (ważny od)\n- $expiry (ważny do)\nCzy przypisać je automatycznie?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Nie'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Tak'),
-              ),
-            ],
-          ),
+            builder: (context) => AlertDialog(
+              title: const Text('Wykryto dwie daty'),
+              content: Text('Wykryto dwie daty:\n- ${validFrom.dateTime} (ważny od)\n- ${expiry.dateTime} (ważny do)\nCzy przypisać je automatycznie?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Nie'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Tak'),
+                ),
+              ],
+            ),
         );
         if (confirm == true) {
           setState(() {
-            final idxFrom = lines.indexWhere((l) => l.text.contains(validFrom.originalText));
-            final idxTo = lines.indexWhere((l) => l.text.contains(expiry.originalText));
-            if (idxFrom != -1) _selectedTypes[idxFrom] = 'validFrom';
-            if (idxTo != -1) _selectedTypes[idxTo] = 'expiry';
-            _selectedValidFromDate = validFrom.dateTime;
-            _recognizedExpiryDate = expiry.dateTime;
+              // Nie operujemy już na lines czy originalText, tylko na obiektach RecognizedDate
+              _selectedValidFromDate = validFrom.dateTime;
+              _recognizedExpiryDate = expiry.dateTime;
           });
         } else {
           // Jeśli użytkownik nie potwierdzi, pokaż standardowy dialog wyboru ról
-          Map<String, String> dateRoles = { for (var d in foundDates) d: '' };
+          Map<String, String> dateRoles = { for (var d in recognizedDates) d.originalText: '' };
           await showDialog<void>(
             context: context,
             builder: (context) {
@@ -226,19 +223,19 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
                   builder: (context, setStateDialog) {
                     return Column(
                       mainAxisSize: MainAxisSize.min,
-                      children: foundDates.map((date) => Column(
+                      children: recognizedDates.map((date) => Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(date),
+                            Text(date.dateTime.toString()),
                           Row(
                             children: [
                               Radio<String>(
                                 value: 'validFrom',
-                                groupValue: dateRoles[date],
+                                groupValue: dateRoles[date.originalText],
                                 onChanged: (val) {
                                   setStateDialog(() {
-                                    if (!dateRoles.containsValue('validFrom') || dateRoles[date] == 'validFrom') {
-                                      dateRoles[date] = val!;
+                                    if (!dateRoles.containsValue('validFrom') || dateRoles[date.originalText] == 'validFrom') {
+                                      dateRoles[date.originalText] = val!;
                                     }
                                   });
                                 },
@@ -246,11 +243,11 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
                               const Text('ważny od'),
                               Radio<String>(
                                 value: 'expiry',
-                                groupValue: dateRoles[date],
+                                groupValue: dateRoles[date.originalText],
                                 onChanged: (val) {
                                   setStateDialog(() {
-                                    if (!dateRoles.containsValue('expiry') || dateRoles[date] == 'expiry') {
-                                      dateRoles[date] = val!;
+                                    if (!dateRoles.containsValue('expiry') || dateRoles[date.originalText] == 'expiry') {
+                                      dateRoles[date.originalText] = val!;
                                     }
                                   });
                                 },
@@ -270,24 +267,18 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
                   ),
                   TextButton(
                     onPressed: () {
-                      String? validFrom;
-                      String? expiry;
+                      RecognizedDate? validFrom;
+                      RecognizedDate? expiry;
                       dateRoles.forEach((date, role) {
-                        if (role == 'validFrom') validFrom = date;
-                        if (role == 'expiry') expiry = date;
+                        if (role == 'validFrom') validFrom = recognizedDates.firstWhere((d) => d.originalText == date);
+                        if (role == 'expiry') expiry = recognizedDates.firstWhere((d) => d.originalText == date);
                       });
                       setState(() {
                         if (validFrom != null) {
-                          final recognized = _parseDate(validFrom!);
-                          final idx = lines.indexWhere((l) => l.text.contains(validFrom!));
-                          if (idx != -1) _selectedTypes[idx] = 'validFrom';
-                          _selectedValidFromDate = recognized?.dateTime;
+                            _selectedValidFromDate = validFrom!.dateTime;
                         }
                         if (expiry != null) {
-                          final recognized = _parseDate(expiry!);
-                          final idx = lines.indexWhere((l) => l.text.contains(expiry!));
-                          if (idx != -1) _selectedTypes[idx] = 'expiry';
-                          _recognizedExpiryDate = recognized?.dateTime;
+                            _recognizedExpiryDate = expiry!.dateTime;
                         }
                       });
                       Navigator.of(context).pop();
