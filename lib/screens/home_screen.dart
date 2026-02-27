@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:rabacik/screens/add_coupon_screen.dart';
 import 'package:rabacik/screens/coupons_list_screen.dart';
 import 'package:rabacik/screens/scan_coupon_screen.dart';
+import 'package:rabacik/screens/settings_screen.dart';
 import 'package:rabacik/data/models/coupon.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -14,6 +15,19 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Home'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.settings),
+            tooltip: 'Ustawienia',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const SettingsScreen(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Stack(
         children: [
