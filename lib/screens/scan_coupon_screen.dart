@@ -192,7 +192,7 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
           context: context,
             builder: (context) => AlertDialog(
               title: const Text('Wykryto dwie daty'),
-              content: Text('Wykryto dwie daty:\n- ${formatDate(validFrom.dateTime)} (ważny od)\n- ${formatDate(expiry.dateTime)} (ważny do)\nCzy przypisać je automatycznie?'),
+              content: Text('Wykryto dwie daty:\nCzy przypisać je automatycznie?\nJako ważny od - ${formatDate(validFrom.dateTime)}\n oraz ważny do - ${formatDate(expiry.dateTime)}'),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(false),
