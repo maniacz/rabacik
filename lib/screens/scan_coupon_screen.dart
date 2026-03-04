@@ -5,6 +5,7 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import 'package:image_picker/image_picker.dart';
 import 'package:rabacik/data/models/coupon.dart';
 import 'package:rabacik/data/models/recognized_date.dart';
+import 'package:rabacik/data/orc_helper.dart';
 import 'package:rabacik/screens/add_coupon_screen.dart'; // Import AddCouponScreen
 import 'package:path_provider/path_provider.dart';
 import 'package:image/image.dart' as img;
@@ -79,12 +80,13 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
     final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
     final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
     await textRecognizer.close();
-    final lines = recognizedText.blocks.expand((b) => b.lines).toList();
+    final allLines = recognizedText.blocks.expand((b) => b.lines).toList();
+    final filteredLines = filterRecognizedLines(allLines);
     setState(() {
-      _recognizedLines = lines;
+      _recognizedLines = filteredLines;
       _isLoading = false;
     });
-    if (lines.isEmpty) {
+    if (filteredLines.isEmpty) {
       // Show dialog if no text recognized
       if (mounted) {
         final result = await showDialog<String>(
@@ -126,7 +128,7 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
     final dateRegExp = RegExp(r'(?<!\d)(?:20\d{2}[-.](?:0\d|1[0-2]|O\d)[-.](?:0\d|[12]\d|3[01])|(?:0?\d|[12]\d|3[01])[-.](?:0\d|1[0-2]|O\d)[-.]20\d{2}|(?:0?\d|[12]\d|3[01])[-.](?:0\d|1[0-2]|O\d))(?!\d)');
     final foundDates = <String>[];
     final recognizedDates = <RecognizedDate>[];
-    for (final line in lines) {
+    for (final line in filteredLines) {
       final matches = dateRegExp.allMatches(line.text);
       for (final match in matches) {
         // Zamień 'O' na '0' w wykrytej dacie
