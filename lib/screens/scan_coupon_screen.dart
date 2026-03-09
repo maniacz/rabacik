@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:rabacik/data/models/coupon.dart';
 import 'package:rabacik/data/models/recognized_date.dart';
 import 'package:rabacik/data/orc_helper.dart';
+import 'package:rabacik/data/date_text_helper.dart';
 import 'package:rabacik/screens/add_coupon_screen.dart'; // Import AddCouponScreen
 import 'package:path_provider/path_provider.dart';
 import 'package:image/image.dart' as img;
@@ -262,6 +263,12 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
                               final line = entry.value;
                               final rect = line.boundingBox;
                               if (rect == null) return SizedBox.shrink();
+                              // Jeśli data ważności została potwierdzona, nie zaznaczaj tekstów ją zawierających
+                              if (_recognizedExpiryDate != null) {
+                                if (DateTextHelper.containsDate(line.text, _recognizedExpiryDate!)) {
+                                  return SizedBox.shrink();
+                                }
+                              }
                               final left = rect.left * scale + offset.dx;
                               final top = rect.top * scale + offset.dy;
                               final width = rect.width * scale;
