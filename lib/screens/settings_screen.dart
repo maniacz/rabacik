@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rabacik/data/notification_helper.dart';
 import 'package:rabacik/data/orc_helper.dart';
+import 'package:rabacik/data/rectangle_settings.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -10,6 +11,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  bool showDetectedRectangles = RectangleSettings.showDetectedRectangles;
   bool pushNotificationsEnabled = NotificationHelper.notificationsEnabled;
   int notifyBeforeDays = NotificationHelper.notifyBeforeDays;
   int ocrMaxLength = OCRSettings.maxLength;
@@ -33,6 +35,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 setState(() {
                   pushNotificationsEnabled = value;
                   NotificationHelper.notificationsEnabled = value;
+                });
+              },
+            ),
+            SwitchListTile(
+              title: const Text('Otaczaj wykryte teksty prostokątami'),
+              value: showDetectedRectangles,
+              onChanged: (value) {
+                setState(() {
+                  showDetectedRectangles = value;
+                  RectangleSettings.showDetectedRectangles = value;
                 });
               },
             ),
