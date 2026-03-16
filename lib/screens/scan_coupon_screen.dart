@@ -263,9 +263,14 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
                               final line = entry.value;
                               final rect = line.boundingBox;
                               if (rect == null) return SizedBox.shrink();
-                              // Jeśli data ważności została potwierdzona, nie zaznaczaj tekstów ją zawierających
+                              // Jeśli data ważności lub validFromDate została potwierdzona, nie zaznaczaj tekstów je zawierających
                               if (_recognizedExpiryDate != null) {
                                 if (DateTextHelper.containsDate(line.text, _recognizedExpiryDate!)) {
+                                  return SizedBox.shrink();
+                                }
+                              }
+                              if (_selectedValidFromDate != null) {
+                                if (DateTextHelper.containsDate(line.text, _selectedValidFromDate!)) {
                                   return SizedBox.shrink();
                                 }
                               }
