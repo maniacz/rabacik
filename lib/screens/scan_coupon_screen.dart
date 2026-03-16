@@ -531,17 +531,14 @@ class _SelectableTextDialogState extends State<_SelectableTextDialog> {
                   autofocus: true,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
-                    labelText: 'Zaznacz fragment tekstu',
+                    labelText: 'Zostaw co chcesz zapisać',
                   ),
                 )
               : GestureDetector(
                   onTap: () {
                     setState(() {
                       showTextField = true;
-                      // Ustaw focus na TextField po przełączeniu
-                      Future.delayed(const Duration(milliseconds: 100), () {
-                        focusNode.requestFocus();
-                      });
+                      focusNode.requestFocus(); // Natychmiastowe ustawienie focusa
                     });
                   },
                   child: Text(
