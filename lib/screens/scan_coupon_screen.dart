@@ -313,17 +313,7 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
                                       ),
                                       color: Colors.white.withOpacity(0.1),
                                     ),
-                                    child: Center(
-                                      child: Text(
-                                        line.text,
-                                        style: const TextStyle(
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.bold,
-                                          backgroundColor: Colors.white70,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
+                                    child: const SizedBox.shrink(),
                                   ),
                                 ),
                               );
