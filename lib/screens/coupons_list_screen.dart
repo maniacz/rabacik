@@ -131,7 +131,7 @@ class _CouponsListBodyState extends State<CouponsListBody> {
                         builder: (context) => AddCouponScreen(coupon: coupon, isEditMode: true),
                       ),
                     );
-                    if (isCouponEdited) {
+                    if (isCouponEdited == true) {
                       await _refreshCoupons();
                     }
                   },
