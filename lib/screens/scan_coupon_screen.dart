@@ -24,7 +24,7 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
   late File _image;
   List<TextLine> _recognizedLines = [];
   bool _isLoading = false;
-  Map<int, String> _selectedTypes = {};
+  Map<int, Map<String, dynamic>> _selectedTypes = {};
   int _rotationTurns = 0;
   DateTime? _recognizedExpiryDate;
   DateTime? _selectedValidFromDate;
@@ -295,20 +295,23 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
                                       );
                                       if (result != null && result['type'] != null) {
                                         setState(() {
-                                          _selectedTypes[index] = result['type'];
+                                          _selectedTypes[index] = {
+                                            'type': result['type'],
+                                            'text': result['text'] ?? line.text,
+                                          };
                                         });
                                       }
                                     },
                                     child: Container(
                                       decoration: BoxDecoration(
                                         border: Border.all(
-                                          color: _selectedTypes[index] == 'code'
+                                          color: _selectedTypes[index]?['type'] == 'code'
                                               ? Colors.green
-                                              : _selectedTypes[index] == 'issuer'
+                                              : _selectedTypes[index]?['type'] == 'issuer'
                                                   ? Colors.blue
-                                                  : _selectedTypes[index] == 'discount'
+                                                  : _selectedTypes[index]?['type'] == 'discount'
                                                       ? Colors.purple
-                                                      : _selectedTypes[index] == 'expiry'
+                                                      : _selectedTypes[index]?['type'] == 'expiry'
                                                           ? Colors.orange
                                                           : Colors.red,
                                           width: 2,
@@ -335,18 +338,19 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
                   String issuer = '';
                   String discount = '';
                   String expiry = '';
-                  _selectedTypes.forEach((index, type) {
-                    final lineText = _recognizedLines[index].text;
+                  _selectedTypes.forEach((index, value) {
+                    final type = value['type'];
+                    final text = value['text'];
                     if (type == 'code') {
-                      code = lineText;
+                      code = text;
                     } else if (type == 'issuer') {
-                      issuer = lineText;
+                      issuer = text;
                     } else if (type == 'discount') {
-                      final cleaned = lineText.replaceAll(RegExp(r'[-%\\s]'), '');
+                      final cleaned = text.replaceAll(RegExp(r'[-%\\s]'), '');
                       discount = int.tryParse(cleaned)?.toString() ?? '';
                     } else if (type == 'expiry') {
                       if (_recognizedExpiryDate == null) {
-                        expiry = lineText;
+                        expiry = text;
                       }
                     }
                   });
