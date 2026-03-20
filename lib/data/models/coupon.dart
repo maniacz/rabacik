@@ -41,6 +41,11 @@ class Coupon {
     final inAWeek = now.add(Duration(days: 7));
     return now.isBefore(expiryDate!) && expiryDate!.isBefore(inAWeek);
   }
+    /// Returns true if the coupon is expired.
+    bool isExpired() {
+      if (expiryDate == null) return false;
+      return DateTime.now().isAfter(expiryDate!);
+    }
 
   Map<String, dynamic> toMap() {
     return {

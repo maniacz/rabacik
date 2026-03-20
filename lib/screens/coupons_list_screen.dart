@@ -104,7 +104,12 @@ class _CouponsListBodyState extends State<CouponsListBody> {
                       ),
                 title: Row(
                   children: [
-                    Text(coupon.code),
+                      Text(
+                        coupon.code,
+                        style: coupon.isExpired()
+                            ? const TextStyle(color: Colors.grey)
+                            : null,
+                      ),
                     if (coupon.isExpiringSoon()) ...[
                       const SizedBox(width: 8),
                       Icon(Icons.warning, color: Colors.orange, size: 20),
@@ -114,7 +119,12 @@ class _CouponsListBodyState extends State<CouponsListBody> {
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(couponText),
+                      Text(
+                        couponText,
+                        style: coupon.isExpired()
+                            ? const TextStyle(color: Colors.grey)
+                            : null,
+                      ),
                     if (coupon.isExpiringSoon())
                       const Text(
                         'UWAGA: Kupon wkrótce wygaśnie!',
