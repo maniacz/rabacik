@@ -28,6 +28,7 @@ class CouponsListBody extends StatefulWidget {
 class _CouponsListBodyState extends State<CouponsListBody> {
   late Future<List<Coupon>> _couponsFuture;
   String _sortOption = 'expiryDateDesc';
+  bool _showArchived = false;
   static const Map<String, String> _sortOptions = {
     'expiryDateAsc': 'Data rosnąco',
     'expiryDateDesc': 'Data malejąco',
@@ -51,17 +52,20 @@ class _CouponsListBodyState extends State<CouponsListBody> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Text('Sortuj:'),
-              const SizedBox(width: 12),
+              Text('Sortuj:', style: TextStyle(fontSize: 13)),
+              const SizedBox(width: 8),
               DropdownButton<String>(
                 value: _sortOption,
+                style: const TextStyle(fontSize: 13, color: Colors.black),
                 items: _sortOptions.entries
                     .map((entry) => DropdownMenuItem<String>(
                           value: entry.key,
-                          child: Text(entry.value),
+                          child: Text(entry.value, style: const TextStyle(fontSize: 13)),
                         ))
                     .toList(),
                 onChanged: (value) {
@@ -71,6 +75,20 @@ class _CouponsListBodyState extends State<CouponsListBody> {
                     });
                   }
                 },
+              ),
+              const SizedBox(width: 12),
+              Text('Pokaż zarchiwizowane', style: TextStyle(fontSize: 13)),
+              Transform.scale(
+                scale: 0.75,
+                child: Switch(
+                  value: _showArchived,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  onChanged: (value) {
+                    setState(() {
+                      _showArchived = value;
+                    });
+                  },
+                ),
               ),
             ],
           ),
@@ -86,6 +104,10 @@ class _CouponsListBodyState extends State<CouponsListBody> {
                 return Center(child: Text('Error {snapshot.error}'),);
               } else {
                 List<Coupon> coupons = List.from(snapshot.data!);
+                // Filtrowanie zarchiwizowanych
+                if (!_showArchived) {
+                  coupons = coupons.where((c) => !c.isExpired()).toList();
+                }
                 if (_sortOption == 'issuer') {
                   coupons.sort((a, b) => (a.issuer ?? '').toLowerCase().compareTo((b.issuer ?? '').toLowerCase()));
                 } else if (_sortOption == 'expiryDateAsc') {
