@@ -27,6 +27,12 @@ class CouponsListBody extends StatefulWidget {
 
 class _CouponsListBodyState extends State<CouponsListBody> {
   late Future<List<Coupon>> _couponsFuture;
+  String _sortOption = 'expiryDateDesc';
+  static const Map<String, String> _sortOptions = {
+    'expiryDateAsc': 'Data rosnąco',
+    'expiryDateDesc': 'Data malejąco',
+    'issuer': 'Wystawca (A-Z)',
+  };
 
   @override
   void initState() {
@@ -42,116 +48,165 @@ class _CouponsListBodyState extends State<CouponsListBody> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<Coupon>>(
-      future: _couponsFuture,
-      builder: (context, snapshot) {
-        final List<Dismissible> listTiles = [];
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-            return Center(child: Text('Error ${snapshot.error}'),);
-        } else {
-          for (Coupon coupon in snapshot.data!) {
-            String couponText = coupon.expiryDate == null
-            ? '${coupon.discount}% - bez daty ważności - ${coupon.issuer}'
-            : '${coupon.discount}% - ważny do ${coupon.expiryDate.toString().split(' ')[0]} - ${coupon.issuer}';
-
-            listTiles.add(Dismissible(
-              key: Key(coupon.id.toString()),
-              direction: DismissDirection.endToStart,
-              onDismissed: (direction) async {
-                DbHelper helper = DbHelper();
-                await helper.deleteCoupon(coupon.id!);
-                await _refreshCoupons();
-              },
-              background: Container(
-                color: Colors.red,
-                alignment: Alignment.centerRight,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: const Icon(Icons.delete, color: Colors.white),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              const Text('Sortuj:'),
+              const SizedBox(width: 12),
+              DropdownButton<String>(
+                value: _sortOption,
+                items: _sortOptions.entries
+                    .map((entry) => DropdownMenuItem<String>(
+                          value: entry.key,
+                          child: Text(entry.value),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() {
+                      _sortOption = value;
+                    });
+                  }
+                },
               ),
-              child: ListTile(
-                leading: (coupon.imagePath != null && coupon.imagePath!.isNotEmpty && File(coupon.imagePath!).existsSync())
-                    ? GestureDetector(
-                        onTap: () {
-                          Navigator.of(context).push(
+            ],
+          ),
+        ),
+        Expanded(
+          child: FutureBuilder<List<Coupon>>(
+            future: _couponsFuture,
+            builder: (context, snapshot) {
+              final List<Dismissible> listTiles = [];
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(child: Text('Error {snapshot.error}'),);
+              } else {
+                List<Coupon> coupons = List.from(snapshot.data!);
+                if (_sortOption == 'issuer') {
+                  coupons.sort((a, b) => (a.issuer ?? '').toLowerCase().compareTo((b.issuer ?? '').toLowerCase()));
+                } else if (_sortOption == 'expiryDateAsc') {
+                  coupons.sort((a, b) {
+                    if (a.expiryDate == null && b.expiryDate == null) return 0;
+                    if (a.expiryDate == null) return 1;
+                    if (b.expiryDate == null) return -1;
+                    return a.expiryDate!.compareTo(b.expiryDate!);
+                  });
+                } else if (_sortOption == 'expiryDateDesc') {
+                  coupons.sort((a, b) {
+                    if (a.expiryDate == null && b.expiryDate == null) return 0;
+                    if (a.expiryDate == null) return 1;
+                    if (b.expiryDate == null) return -1;
+                    return b.expiryDate!.compareTo(a.expiryDate!);
+                  });
+                }
+                for (Coupon coupon in coupons) {
+                  String couponText = coupon.expiryDate == null
+                      ? '${coupon.discount}% - bez daty ważności - ${coupon.issuer}'
+                      : '${coupon.discount}% - ważny do ${coupon.expiryDate.toString().split(' ')[0]} - ${coupon.issuer}';
+
+                  listTiles.add(Dismissible(
+                    key: Key(coupon.id.toString()),
+                    direction: DismissDirection.endToStart,
+                    onDismissed: (direction) async {
+                      DbHelper helper = DbHelper();
+                      await helper.deleteCoupon(coupon.id!);
+                      await _refreshCoupons();
+                    },
+                    background: Container(
+                      color: Colors.red,
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: const Icon(Icons.delete, color: Colors.white),
+                    ),
+                    child: ListTile(
+                      leading: (coupon.imagePath != null && coupon.imagePath!.isNotEmpty && File(coupon.imagePath!).existsSync())
+                          ? GestureDetector(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => CouponImageScreen(imagePath: coupon.imagePath!),
+                                  ),
+                                );
+                              },
+                              child: Image.file(
+                                File(coupon.imagePath!),
+                                width: 48,
+                                height: 48,
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                          : Container(
+                              width: 48,
+                              height: 48,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey, width: 2),
+                                borderRadius: BorderRadius.circular(4),
+                                color: Colors.white,
+                              ),
+                              child: Icon(
+                                Icons.no_photography,
+                                size: 32,
+                                color: Colors.grey,
+                              ),
+                            ),
+                      title: Row(
+                        children: [
+                          Text(
+                            coupon.code,
+                            style: coupon.isExpired()
+                                ? const TextStyle(color: Colors.grey)
+                                : null,
+                          ),
+                          if (coupon.isExpiringSoon()) ...[
+                            const SizedBox(width: 8),
+                            Icon(Icons.warning, color: Colors.orange, size: 20),
+                          ],
+                        ],
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            couponText,
+                            style: coupon.isExpired()
+                                ? const TextStyle(color: Colors.grey)
+                                : null,
+                          ),
+                          if (coupon.isExpiringSoon())
+                            const Text(
+                              'UWAGA: Kupon wkrótce wygaśnie!',
+                              style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold),
+                            ),
+                        ],
+                      ),
+                      isThreeLine: true,
+                      trailing: IconButton(
+                        icon: const Icon(Icons.edit),
+                        onPressed: () async {
+                          final isCouponEdited = await Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) => CouponImageScreen(imagePath: coupon.imagePath!),
+                              builder: (context) => AddCouponScreen(coupon: coupon, isEditMode: true),
                             ),
                           );
+                          if (isCouponEdited == true) {
+                            await _refreshCoupons();
+                          }
                         },
-                        child: Image.file(
-                          File(coupon.imagePath!),
-                          width: 48,
-                          height: 48,
-                          fit: BoxFit.cover,
-                        ),
-                      )
-                    : Container(
-                        width: 48,
-                        height: 48,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey, width: 2),
-                          borderRadius: BorderRadius.circular(4),
-                          color: Colors.white,
-                        ),
-                        child: Icon(
-                          Icons.no_photography,
-                          size: 32,
-                          color: Colors.grey,
-                        ),
                       ),
-                title: Row(
-                  children: [
-                      Text(
-                        coupon.code,
-                        style: coupon.isExpired()
-                            ? const TextStyle(color: Colors.grey)
-                            : null,
-                      ),
-                    if (coupon.isExpiringSoon()) ...[
-                      const SizedBox(width: 8),
-                      Icon(Icons.warning, color: Colors.orange, size: 20),
-                    ],
-                  ],
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                      Text(
-                        couponText,
-                        style: coupon.isExpired()
-                            ? const TextStyle(color: Colors.grey)
-                            : null,
-                      ),
-                    if (coupon.isExpiringSoon())
-                      const Text(
-                        'UWAGA: Kupon wkrótce wygaśnie!',
-                        style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold),
-                      ),
-                  ],
-                ),
-                isThreeLine: true,
-                trailing: IconButton(
-                  icon: const Icon(Icons.edit),
-                  onPressed: () async {
-                    final isCouponEdited = await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => AddCouponScreen(coupon: coupon, isEditMode: true),
-                      ),
-                    );
-                    if (isCouponEdited == true) {
-                      await _refreshCoupons();
-                    }
-                  },
-                ),
-              ),
-            ));
-          }
-        }
-        return ListView(children: listTiles,);
-      },
+                    ),
+                  ));
+                }
+              }
+              return ListView(children: listTiles,);
+            },
+          ),
+        ),
+      ],
     );
   }
 
