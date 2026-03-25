@@ -29,6 +29,7 @@ class _CouponsListBodyState extends State<CouponsListBody> {
   late Future<List<Coupon>> _couponsFuture;
   String _sortOption = 'expiryDateDesc';
   bool _showArchived = false;
+  bool _hasArchivedCoupons = false;
   bool _showDeleteArchivedButton = false;
   static const Map<String, String> _sortOptions = {
     'expiryDateAsc': 'Data rosnąco',
@@ -75,238 +76,253 @@ class _CouponsListBodyState extends State<CouponsListBody> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text('Sortuj:', style: TextStyle(fontSize: 13)),
-              const SizedBox(width: 8),
-              DropdownButton<String>(
-                value: _sortOption,
-                style: const TextStyle(fontSize: 13, color: Colors.black),
-                items: _sortOptions.entries
-                    .map((entry) => DropdownMenuItem<String>(
-                          value: entry.key,
-                          child: Text(entry.value, style: const TextStyle(fontSize: 13)),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() {
-                      _sortOption = value;
-                    });
+    return FutureBuilder<List<Coupon>>(
+      future: _couponsFuture,
+      builder: (context, snapshot) {
+        List<Coupon> coupons = snapshot.data ?? [];
+        List<Coupon> archivedCoupons = coupons.where((c) => c.isExpired()).toList();
+        _hasArchivedCoupons = archivedCoupons.isNotEmpty;
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text('Sortuj:', style: TextStyle(fontSize: 13)),
+                  const SizedBox(width: 8),
+                  DropdownButton<String>(
+                    value: _sortOption,
+                    style: const TextStyle(fontSize: 13, color: Colors.black),
+                    items: _sortOptions.entries
+                        .map((entry) => DropdownMenuItem<String>(
+                              value: entry.key,
+                              child: Text(entry.value, style: const TextStyle(fontSize: 13)),
+                            ))
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() {
+                          _sortOption = value;
+                        });
+                      }
+                    },
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Pokaż zarchiwizowane',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: _hasArchivedCoupons ? Colors.black : Colors.grey,
+                    ),
+                  ),
+                  Transform.scale(
+                    scale: 0.75,
+                    child: Switch(
+                      value: _showArchived,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      onChanged: _hasArchivedCoupons
+                          ? (value) {
+                              setState(() {
+                                _showArchived = value;
+                              });
+                            }
+                          : null,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 500),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              child: _showArchived && _hasArchivedCoupons
+                  ? Padding(
+                      key: const ValueKey('deleteArchivedRow'),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.delete_forever),
+                            label: const Text('Usuń zarchiwizowane kupony'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: _deleteArchivedCoupons,
+                          ),
+                        ],
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+            Expanded(
+              child: Builder(
+                builder: (context) {
+                  final List<Dismissible> listTiles = [];
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error {snapshot.error}'),);
+                  } else {
+                    List<Coupon> coupons = List.from(snapshot.data ?? []);
+                    List<Coupon> activeCoupons = coupons.where((c) => !c.isExpired()).toList();
+                    List<Coupon> archivedCoupons = coupons.where((c) => c.isExpired()).toList();
+
+                    // Sortowanie aktywnych
+                    if (_sortOption == 'issuer') {
+                      activeCoupons.sort((a, b) => (a.issuer ?? '').toLowerCase().compareTo((b.issuer ?? '').toLowerCase()));
+                      archivedCoupons.sort((a, b) => (a.issuer ?? '').toLowerCase().compareTo((b.issuer ?? '').toLowerCase()));
+                    } else if (_sortOption == 'expiryDateAsc') {
+                      activeCoupons.sort((a, b) {
+                        if (a.expiryDate == null && b.expiryDate == null) return 0;
+                        if (a.expiryDate == null) return 1;
+                        if (b.expiryDate == null) return -1;
+                        return a.expiryDate!.compareTo(b.expiryDate!);
+                      });
+                      archivedCoupons.sort((a, b) {
+                        if (a.expiryDate == null && b.expiryDate == null) return 0;
+                        if (a.expiryDate == null) return 1;
+                        if (b.expiryDate == null) return -1;
+                        return a.expiryDate!.compareTo(b.expiryDate!);
+                      });
+                    } else if (_sortOption == 'expiryDateDesc') {
+                      activeCoupons.sort((a, b) {
+                        if (a.expiryDate == null && b.expiryDate == null) return 0;
+                        if (a.expiryDate == null) return 1;
+                        if (b.expiryDate == null) return -1;
+                        return b.expiryDate!.compareTo(a.expiryDate!);
+                      });
+                      archivedCoupons.sort((a, b) {
+                        if (a.expiryDate == null && b.expiryDate == null) return 0;
+                        if (a.expiryDate == null) return 1;
+                        if (b.expiryDate == null) return -1;
+                        return b.expiryDate!.compareTo(a.expiryDate!);
+                      });
+                    }
+
+                    void addCouponTile(Coupon coupon) {
+                      String couponText = coupon.expiryDate == null
+                          ? '${coupon.discount}% - bez daty ważności - ${coupon.issuer}'
+                          : '${coupon.discount}% - ważny do ${coupon.expiryDate.toString().split(' ')[0]} - ${coupon.issuer}';
+
+                      listTiles.add(Dismissible(
+                        key: Key(coupon.id.toString()),
+                        direction: DismissDirection.endToStart,
+                        onDismissed: (direction) async {
+                          DbHelper helper = DbHelper();
+                          await helper.deleteCoupon(coupon.id!);
+                          await _refreshCoupons();
+                        },
+                        background: Container(
+                          color: Colors.red,
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: const Icon(Icons.delete, color: Colors.white),
+                        ),
+                        child: ListTile(
+                          leading: (coupon.imagePath != null && coupon.imagePath!.isNotEmpty && File(coupon.imagePath!).existsSync())
+                              ? GestureDetector(
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) => CouponImageScreen(imagePath: coupon.imagePath!),
+                                      ),
+                                    );
+                                  },
+                                  child: Image.file(
+                                    File(coupon.imagePath!),
+                                    width: 48,
+                                    height: 48,
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                              : Container(
+                                  width: 48,
+                                  height: 48,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey, width: 2),
+                                    borderRadius: BorderRadius.circular(4),
+                                    color: Colors.white,
+                                  ),
+                                  child: Icon(
+                                    Icons.no_photography,
+                                    size: 32,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                          title: Row(
+                            children: [
+                              Text(
+                                coupon.code,
+                                style: coupon.isExpired()
+                                    ? const TextStyle(color: Colors.grey)
+                                    : null,
+                              ),
+                              if (coupon.isExpiringSoon()) ...[
+                                const SizedBox(width: 8),
+                                Icon(Icons.warning, color: Colors.orange, size: 20),
+                              ],
+                            ],
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                couponText,
+                                style: coupon.isExpired()
+                                    ? const TextStyle(color: Colors.grey)
+                                    : null,
+                              ),
+                              if (coupon.isExpiringSoon())
+                                const Text(
+                                  'UWAGA: Kupon wkrótce wygaśnie!',
+                                  style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold),
+                                ),
+                            ],
+                          ),
+                          isThreeLine: true,
+                          trailing: IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: () async {
+                              final isCouponEdited = await Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => AddCouponScreen(coupon: coupon, isEditMode: true),
+                                ),
+                              );
+                              if (isCouponEdited == true) {
+                                await _refreshCoupons();
+                              }
+                            },
+                          ),
+                        ),
+                      ));
+                    }
+
+                    if (_showArchived) {
+                      for (final coupon in activeCoupons) {
+                        addCouponTile(coupon);
+                      }
+                      for (final coupon in archivedCoupons) {
+                        addCouponTile(coupon);
+                      }
+                    } else {
+                      for (final coupon in activeCoupons) {
+                        addCouponTile(coupon);
+                      }
+                    }
                   }
+                  return ListView(children: listTiles,);
                 },
               ),
-              const SizedBox(width: 12),
-              Text('Pokaż zarchiwizowane', style: TextStyle(fontSize: 13)),
-              Transform.scale(
-                scale: 0.75,
-                child: Switch(
-                  value: _showArchived,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  onChanged: (value) {
-                    setState(() {
-                      _showArchived = value;
-                    });
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 500),
-          switchInCurve: Curves.easeOutCubic,
-          switchOutCurve: Curves.easeInCubic,
-          child: _showArchived
-              ? Padding(
-                  key: const ValueKey('deleteArchivedRow'),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.delete_forever),
-                        label: const Text('Usuń zarchiwizowane kupony'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          foregroundColor: Colors.white,
-                        ),
-                        onPressed: _deleteArchivedCoupons,
-                      ),
-                    ],
-                  ),
-                )
-              : const SizedBox.shrink(),
-        ),
-        Expanded(
-          child: FutureBuilder<List<Coupon>>(
-            future: _couponsFuture,
-            builder: (context, snapshot) {
-              final List<Dismissible> listTiles = [];
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return Center(child: Text('Error {snapshot.error}'),);
-              } else {
-                List<Coupon> coupons = List.from(snapshot.data!);
-                List<Coupon> activeCoupons = coupons.where((c) => !c.isExpired()).toList();
-                List<Coupon> archivedCoupons = coupons.where((c) => c.isExpired()).toList();
-
-                // Sortowanie aktywnych
-                if (_sortOption == 'issuer') {
-                  activeCoupons.sort((a, b) => (a.issuer ?? '').toLowerCase().compareTo((b.issuer ?? '').toLowerCase()));
-                  archivedCoupons.sort((a, b) => (a.issuer ?? '').toLowerCase().compareTo((b.issuer ?? '').toLowerCase()));
-                } else if (_sortOption == 'expiryDateAsc') {
-                  activeCoupons.sort((a, b) {
-                    if (a.expiryDate == null && b.expiryDate == null) return 0;
-                    if (a.expiryDate == null) return 1;
-                    if (b.expiryDate == null) return -1;
-                    return a.expiryDate!.compareTo(b.expiryDate!);
-                  });
-                  archivedCoupons.sort((a, b) {
-                    if (a.expiryDate == null && b.expiryDate == null) return 0;
-                    if (a.expiryDate == null) return 1;
-                    if (b.expiryDate == null) return -1;
-                    return a.expiryDate!.compareTo(b.expiryDate!);
-                  });
-                } else if (_sortOption == 'expiryDateDesc') {
-                  activeCoupons.sort((a, b) {
-                    if (a.expiryDate == null && b.expiryDate == null) return 0;
-                    if (a.expiryDate == null) return 1;
-                    if (b.expiryDate == null) return -1;
-                    return b.expiryDate!.compareTo(a.expiryDate!);
-                  });
-                  archivedCoupons.sort((a, b) {
-                    if (a.expiryDate == null && b.expiryDate == null) return 0;
-                    if (a.expiryDate == null) return 1;
-                    if (b.expiryDate == null) return -1;
-                    return b.expiryDate!.compareTo(a.expiryDate!);
-                  });
-                }
-
-                void addCouponTile(Coupon coupon) {
-                  String couponText = coupon.expiryDate == null
-                      ? '${coupon.discount}% - bez daty ważności - ${coupon.issuer}'
-                      : '${coupon.discount}% - ważny do ${coupon.expiryDate.toString().split(' ')[0]} - ${coupon.issuer}';
-
-                  listTiles.add(Dismissible(
-                    key: Key(coupon.id.toString()),
-                    direction: DismissDirection.endToStart,
-                    onDismissed: (direction) async {
-                      DbHelper helper = DbHelper();
-                      await helper.deleteCoupon(coupon.id!);
-                      await _refreshCoupons();
-                    },
-                    background: Container(
-                      color: Colors.red,
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: const Icon(Icons.delete, color: Colors.white),
-                    ),
-                    child: ListTile(
-                      leading: (coupon.imagePath != null && coupon.imagePath!.isNotEmpty && File(coupon.imagePath!).existsSync())
-                          ? GestureDetector(
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => CouponImageScreen(imagePath: coupon.imagePath!),
-                                  ),
-                                );
-                              },
-                              child: Image.file(
-                                File(coupon.imagePath!),
-                                width: 48,
-                                height: 48,
-                                fit: BoxFit.cover,
-                              ),
-                            )
-                          : Container(
-                              width: 48,
-                              height: 48,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey, width: 2),
-                                borderRadius: BorderRadius.circular(4),
-                                color: Colors.white,
-                              ),
-                              child: Icon(
-                                Icons.no_photography,
-                                size: 32,
-                                color: Colors.grey,
-                              ),
-                            ),
-                      title: Row(
-                        children: [
-                          Text(
-                            coupon.code,
-                            style: coupon.isExpired()
-                                ? const TextStyle(color: Colors.grey)
-                                : null,
-                          ),
-                          if (coupon.isExpiringSoon()) ...[
-                            const SizedBox(width: 8),
-                            Icon(Icons.warning, color: Colors.orange, size: 20),
-                          ],
-                        ],
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            couponText,
-                            style: coupon.isExpired()
-                                ? const TextStyle(color: Colors.grey)
-                                : null,
-                          ),
-                          if (coupon.isExpiringSoon())
-                            const Text(
-                              'UWAGA: Kupon wkrótce wygaśnie!',
-                              style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold),
-                            ),
-                        ],
-                      ),
-                      isThreeLine: true,
-                      trailing: IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: () async {
-                          final isCouponEdited = await Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => AddCouponScreen(coupon: coupon, isEditMode: true),
-                            ),
-                          );
-                          if (isCouponEdited == true) {
-                            await _refreshCoupons();
-                          }
-                        },
-                      ),
-                    ),
-                  ));
-                }
-
-                if (_showArchived) {
-                  for (final coupon in activeCoupons) {
-                    addCouponTile(coupon);
-                  }
-                  for (final coupon in archivedCoupons) {
-                    addCouponTile(coupon);
-                  }
-                } else {
-                  for (final coupon in activeCoupons) {
-                    addCouponTile(coupon);
-                  }
-                }
-              }
-              return ListView(children: listTiles,);
-            },
-          ),
-        ),
-      ],
+            ),
+          ],
+        );
+      },
     );
   }
 
