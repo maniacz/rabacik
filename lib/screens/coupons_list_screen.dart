@@ -155,28 +155,42 @@ class _CouponsListBodyState extends State<CouponsListBody> {
                 return Center(child: Text('Error {snapshot.error}'),);
               } else {
                 List<Coupon> coupons = List.from(snapshot.data!);
-                // Filtrowanie zarchiwizowanych
-                if (!_showArchived) {
-                  coupons = coupons.where((c) => !c.isExpired()).toList();
-                }
+                List<Coupon> activeCoupons = coupons.where((c) => !c.isExpired()).toList();
+                List<Coupon> archivedCoupons = coupons.where((c) => c.isExpired()).toList();
+
+                // Sortowanie aktywnych
                 if (_sortOption == 'issuer') {
-                  coupons.sort((a, b) => (a.issuer ?? '').toLowerCase().compareTo((b.issuer ?? '').toLowerCase()));
+                  activeCoupons.sort((a, b) => (a.issuer ?? '').toLowerCase().compareTo((b.issuer ?? '').toLowerCase()));
+                  archivedCoupons.sort((a, b) => (a.issuer ?? '').toLowerCase().compareTo((b.issuer ?? '').toLowerCase()));
                 } else if (_sortOption == 'expiryDateAsc') {
-                  coupons.sort((a, b) {
+                  activeCoupons.sort((a, b) {
+                    if (a.expiryDate == null && b.expiryDate == null) return 0;
+                    if (a.expiryDate == null) return 1;
+                    if (b.expiryDate == null) return -1;
+                    return a.expiryDate!.compareTo(b.expiryDate!);
+                  });
+                  archivedCoupons.sort((a, b) {
                     if (a.expiryDate == null && b.expiryDate == null) return 0;
                     if (a.expiryDate == null) return 1;
                     if (b.expiryDate == null) return -1;
                     return a.expiryDate!.compareTo(b.expiryDate!);
                   });
                 } else if (_sortOption == 'expiryDateDesc') {
-                  coupons.sort((a, b) {
+                  activeCoupons.sort((a, b) {
+                    if (a.expiryDate == null && b.expiryDate == null) return 0;
+                    if (a.expiryDate == null) return 1;
+                    if (b.expiryDate == null) return -1;
+                    return b.expiryDate!.compareTo(a.expiryDate!);
+                  });
+                  archivedCoupons.sort((a, b) {
                     if (a.expiryDate == null && b.expiryDate == null) return 0;
                     if (a.expiryDate == null) return 1;
                     if (b.expiryDate == null) return -1;
                     return b.expiryDate!.compareTo(a.expiryDate!);
                   });
                 }
-                for (Coupon coupon in coupons) {
+
+                void addCouponTile(Coupon coupon) {
                   String couponText = coupon.expiryDate == null
                       ? '${coupon.discount}% - bez daty ważności - ${coupon.issuer}'
                       : '${coupon.discount}% - ważny do ${coupon.expiryDate.toString().split(' ')[0]} - ${coupon.issuer}';
@@ -273,6 +287,19 @@ class _CouponsListBodyState extends State<CouponsListBody> {
                       ),
                     ),
                   ));
+                }
+
+                if (_showArchived) {
+                  for (final coupon in activeCoupons) {
+                    addCouponTile(coupon);
+                  }
+                  for (final coupon in archivedCoupons) {
+                    addCouponTile(coupon);
+                  }
+                } else {
+                  for (final coupon in activeCoupons) {
+                    addCouponTile(coupon);
+                  }
                 }
               }
               return ListView(children: listTiles,);
