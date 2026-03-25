@@ -29,6 +29,7 @@ class _CouponsListBodyState extends State<CouponsListBody> {
   late Future<List<Coupon>> _couponsFuture;
   String _sortOption = 'expiryDateDesc';
   bool _showArchived = false;
+  bool _showDeleteArchivedButton = false;
   static const Map<String, String> _sortOptions = {
     'expiryDateAsc': 'Data rosnąco',
     'expiryDateDesc': 'Data malejąco',
@@ -45,6 +46,31 @@ class _CouponsListBodyState extends State<CouponsListBody> {
     setState(() {
       _couponsFuture = getCoupons();
     });
+  }
+
+  Future<void> _deleteArchivedCoupons() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Usuń zarchiwizowane kupony'),
+        content: const Text('Czy na pewno chcesz usunąć wszystkie zarchiwizowane kupony? Tej operacji nie można cofnąć.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Anuluj'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Usuń'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      DbHelper helper = DbHelper();
+      await helper.deleteArchivedCoupons();
+      await _refreshCoupons();
+    }
   }
 
   @override
@@ -92,6 +118,31 @@ class _CouponsListBodyState extends State<CouponsListBody> {
               ),
             ],
           ),
+        ),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 500),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeInCubic,
+          child: _showArchived
+              ? Padding(
+                  key: const ValueKey('deleteArchivedRow'),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.delete_forever),
+                        label: const Text('Usuń zarchiwizowane kupony'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: _deleteArchivedCoupons,
+                      ),
+                    ],
+                  ),
+                )
+              : const SizedBox.shrink(),
         ),
         Expanded(
           child: FutureBuilder<List<Coupon>>(

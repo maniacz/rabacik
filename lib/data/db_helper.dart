@@ -6,6 +6,22 @@ import 'package:sembast/sembast_io.dart';
 import 'models/coupon.dart';
 
 class DbHelper {
+    /// Usuwa wszystkie zarchiwizowane (przeterminowane) kupony
+    Future<int> deleteArchivedCoupons() async {
+      Database db = await _openDb();
+      final now = DateTime.now();
+      // Pobierz wszystkie kupony
+      final couponsSnapshot = await store.find(db);
+      int deleted = 0;
+      for (final item in couponsSnapshot) {
+        final coupon = Coupon.fromJSON(item.value);
+        if (coupon.expiryDate != null && now.isAfter(coupon.expiryDate!)) {
+          await store.record(item.key).delete(db);
+          deleted++;
+        }
+      }
+      return deleted;
+    }
   DatabaseFactory dbFactory = databaseFactoryIo;
   Database? db;
   final store = intMapStoreFactory.store('quotes');
