@@ -6,6 +6,15 @@ import 'package:sembast/sembast_io.dart';
 import 'models/coupon.dart';
 
 class DbHelper {
+      /// Wstawia kupon z określonym id (do przywracania usuniętego kuponu)
+      Future<void> insertCouponWithId(Coupon coupon) async {
+        Database db = await _openDb();
+        if (coupon.id != null) {
+          await store.record(coupon.id).put(db, coupon.toMap());
+        } else {
+          await store.add(db, coupon.toMap());
+        }
+      }
     /// Usuwa wszystkie zarchiwizowane (przeterminowane) kupony
     Future<int> deleteArchivedCoupons() async {
       Database db = await _openDb();

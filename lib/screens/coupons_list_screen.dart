@@ -213,9 +213,25 @@ class _CouponsListBodyState extends State<CouponsListBody> {
                         key: Key(coupon.id.toString()),
                         direction: DismissDirection.endToStart,
                         onDismissed: (direction) async {
+                          final deletedCoupon = coupon;
                           DbHelper helper = DbHelper();
                           await helper.deleteCoupon(coupon.id!);
                           await _refreshCoupons();
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Kupon usunięty'),
+                                action: SnackBarAction(
+                                  label: 'Cofnij',
+                                  onPressed: () async {
+                                    await helper.insertCouponWithId(deletedCoupon);
+                                    await _refreshCoupons();
+                                  },
+                                ),
+                                duration: const Duration(seconds: 4),
+                              ),
+                            );
+                          }
                         },
                         background: Container(
                           color: Colors.red,
