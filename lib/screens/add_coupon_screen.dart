@@ -276,6 +276,39 @@ class _AddCouponScreenState extends State<AddCouponScreen> {
                         return;
                       }
                     }
+                    // Jeśli wybrana data ważności jest w przeszłości, zapytaj użytkownika o potwierdzenie
+                    if (_selectedExpiryDate != null) {
+                      final now = DateTime.now();
+                      final expiry = DateTime(
+                        _selectedExpiryDate!.year,
+                        _selectedExpiryDate!.month,
+                        _selectedExpiryDate!.day,
+                      );
+                      final today = DateTime(now.year, now.month, now.day);
+                      if (expiry.isBefore(today)) {
+                        final confirmPast = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Kupon już wygasł'),
+                            content: Text('Wybrana data ważności kuponu (${expiry.day}-${expiry.month}-${expiry.year}) już minęła. Kupon zostanie automatycznie zarchiwizowany. Czy na pewno chcesz dodać taki kupon?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(false),
+                                child: const Text('Nie'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(true),
+                                child: const Text('Tak'),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirmPast != true) {
+                          // User cancelled, return to editing
+                          return;
+                        }
+                      }
+                    }
                     DbHelper helper = DbHelper();
                     Coupon coupon = Coupon(
                       id: widget.coupon?.id,
