@@ -259,70 +259,71 @@ class _ScanCouponScreenState extends State<ScanCouponScreen> {
                         return Stack(
                           children: [
                             Image.file(_image!, width: displayWidth, height: displayHeight, fit: BoxFit.contain),
-                            if (RectangleSettings.showDetectedRectangles)
-                              ..._recognizedLines.asMap().entries.map((entry) {
-                                final index = entry.key;
-                                final line = entry.value;
-                                final rect = line.boundingBox;
-                                if (rect == null) return SizedBox.shrink();
-                                // Jeśli data ważności lub validFromDate została potwierdzona, nie zaznaczaj tekstów je zawierających
-                                if (_recognizedExpiryDate != null) {
-                                  if (DateTextHelper.containsDate(line.text, _recognizedExpiryDate!)) {
-                                    return SizedBox.shrink();
-                                  }
+                            ..._recognizedLines.asMap().entries.map((entry) {
+                              final index = entry.key;
+                              final line = entry.value;
+                              final rect = line.boundingBox;
+                              if (rect == null) return SizedBox.shrink();
+                              // Jeśli data ważności lub validFromDate została potwierdzona, nie zaznaczaj tekstów je zawierających
+                              if (_recognizedExpiryDate != null) {
+                                if (DateTextHelper.containsDate(line.text, _recognizedExpiryDate!)) {
+                                  return SizedBox.shrink();
                                 }
-                                if (_selectedValidFromDate != null) {
-                                  if (DateTextHelper.containsDate(line.text, _selectedValidFromDate!)) {
-                                    return SizedBox.shrink();
-                                  }
+                              }
+                              if (_selectedValidFromDate != null) {
+                                if (DateTextHelper.containsDate(line.text, _selectedValidFromDate!)) {
+                                  return SizedBox.shrink();
                                 }
-                                final left = rect.left * scale + offset.dx;
-                                final top = rect.top * scale + offset.dy;
-                                final width = rect.width * scale;
-                                final height = rect.height * scale;
-                                return Positioned(
-                                  left: left,
-                                  top: top,
-                                  width: width,
-                                  height: height,
-                                  child: GestureDetector(
-                                    onTap: () async {
-                                      final result = await showDialog<Map<String, dynamic>>(
-                                        context: context,
-                                        builder: (context) {
-                                          return _SelectableTextDialog(line: line);
-                                        },
-                                      );
-                                      if (result != null && result['type'] != null) {
-                                        setState(() {
-                                          _selectedTypes[index] = {
-                                            'type': result['type'],
-                                            'text': result['text'] ?? line.text,
-                                          };
-                                        });
-                                      }
-                                    },
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        border: Border.all(
-                                          color: _selectedTypes[index]?['type'] == 'code'
-                                              ? Colors.green
-                                              : _selectedTypes[index]?['type'] == 'issuer'
-                                                  ? Colors.blue
-                                                  : _selectedTypes[index]?['type'] == 'discount'
-                                                      ? Colors.purple
-                                                      : _selectedTypes[index]?['type'] == 'expiry'
-                                                          ? Colors.orange
-                                                          : Colors.red,
-                                          width: 2,
-                                        ),
-                                        color: Colors.white.withOpacity(0.1),
-                                      ),
-                                      child: const SizedBox.shrink(),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
+                              }
+                              final left = rect.left * scale + offset.dx;
+                              final top = rect.top * scale + offset.dy;
+                              final width = rect.width * scale;
+                              final height = rect.height * scale;
+                              return Positioned(
+                                left: left,
+                                top: top,
+                                width: width,
+                                height: height,
+                                child: GestureDetector(
+                                  onTap: () async {
+                                    final result = await showDialog<Map<String, dynamic>>(
+                                      context: context,
+                                      builder: (context) {
+                                        return _SelectableTextDialog(line: line);
+                                      },
+                                    );
+                                    if (result != null && result['type'] != null) {
+                                      setState(() {
+                                        _selectedTypes[index] = {
+                                          'type': result['type'],
+                                          'text': result['text'] ?? line.text,
+                                        };
+                                      });
+                                    }
+                                  },
+                                  child: RectangleSettings.showDetectedRectangles
+                                      ? Container(
+                                          decoration: BoxDecoration(
+                                            border: Border.all(
+                                              color: _selectedTypes[index]?['type'] == 'code'
+                                                  ? Colors.green
+                                                  : _selectedTypes[index]?['type'] == 'issuer'
+                                                      ? Colors.blue
+                                                      : _selectedTypes[index]?['type'] == 'discount'
+                                                          ? Colors.purple
+                                                          : _selectedTypes[index]?['type'] == 'expiry'
+                                                              ? Colors.orange
+                                                              : Colors.red,
+                                              width: 2,
+                                            ),
+                                            color: Colors.white.withOpacity(0.1),
+                                          ),
+                                          child: const SizedBox.shrink(),
+                                        )
+                                      : Container(color: Colors.transparent),
+                                ),
+                              );
+                            }).toList(),
                           ],
                         );
                       },

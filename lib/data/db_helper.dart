@@ -10,7 +10,7 @@ class DbHelper {
       Future<void> insertCouponWithId(Coupon coupon) async {
         Database db = await _openDb();
         if (coupon.id != null) {
-          await store.record(coupon.id).put(db, coupon.toMap());
+          await store.record(coupon.id!).put(db, coupon.toMap());
         } else {
           await store.add(db, coupon.toMap());
         }
