@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:rabacik/widgets/action_card.dart';
+import 'package:rabacik/screens/add_coupon_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -33,26 +34,33 @@ class HomeScreen extends StatelessWidget {
                 crossAxisCount: 2,
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
-                children: const [
+                children: [
                   ActionCard(
                     icon: Icons.add,
                     title: "Dodaj kupon",
                     subtitle: "Dodaj ręcznie nowe rabaty",
                     buttonText: "Dodaj",
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => AddCouponScreen(),
+                        ),
+                      );
+                    },
                   ),
-                  ActionCard(
+                  const ActionCard(
                     icon: Icons.folder,
                     title: "Moje kupony",
                     subtitle: "Przeglądaj i zarządzaj",
                     buttonText: "Otwórz",
                   ),
-                  ActionCard(
+                  const ActionCard(
                     icon: Icons.camera_alt,
                     title: "Skanuj kupon",
                     subtitle: "Użyj aparatu",
                     buttonText: "Skanuj",
                   ),
-                  ActionCard(
+                  const ActionCard(
                     icon: Icons.image,
                     title: "Z galerii",
                     subtitle: "Wybierz zdjęcie",
